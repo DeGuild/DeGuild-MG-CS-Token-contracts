@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./DeGuildCoinERC777.sol";
 
-contract DeguildCoin is DeGuildCoinERC777 {
+contract DeGuildCoin is DeGuildCoinERC777 {
     address[] arr;
 
     constructor()

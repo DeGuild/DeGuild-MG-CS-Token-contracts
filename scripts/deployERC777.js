@@ -6,7 +6,7 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const Token = await ethers.getContractFactory("DeGuildCoin");
+  const Token = await ethers.getContractFactory("DeGuildCoinERC777");
   const token = await Token.deploy();
 
   console.log("Token address:", token.address);

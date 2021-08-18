@@ -1,42 +1,6 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/contracts/Greeter.sol": {
-      "lastModificationDate": 1628693480652,
-      "contentHash": "3e842e8d20d21476fa9ee5adae6c9d39",
-      "sourceName": "contracts/Greeter.sol",
-      "solcConfig": {
-        "version": "0.8.4",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Greeter"
-      ]
-    },
     "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/hardhat/console.sol": {
       "lastModificationDate": 1628693264132,
       "contentHash": "cc4777addd464ea56fa35b1c45df0591",
@@ -69,6 +33,392 @@
       ],
       "artifacts": [
         "console"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/contracts/Token.sol": {
+      "lastModificationDate": 1629287327920,
+      "contentHash": "b84cfdf9472536ff9fac9077a4a88bc1",
+      "sourceName": "contracts/Token.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Token"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/contracts/DeGuildCoin.sol": {
+      "lastModificationDate": 1629305661879,
+      "contentHash": "d4bafe647dd5ad4c96c0b13ec517e4b4",
+      "sourceName": "contracts/DeGuildCoin.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./DeGuildCoinERC777.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "DeguildCoin"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/contracts/DeGuildCoinERC777.sol": {
+      "lastModificationDate": 1629305503790,
+      "contentHash": "9869bc069193eab51e0112b46832d1d6",
+      "sourceName": "contracts/DeGuildCoinERC777.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC777/ERC777.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "DeGuildCoinERC777"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/token/ERC777/ERC777.sol": {
+      "lastModificationDate": 1629305046388,
+      "contentHash": "5dc485e66e8766e5bb67a55252cb0f93",
+      "sourceName": "@openzeppelin/contracts/token/ERC777/ERC777.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IERC777.sol",
+        "./IERC777Recipient.sol",
+        "./IERC777Sender.sol",
+        "../ERC20/IERC20.sol",
+        "../../utils/Address.sol",
+        "../../utils/Context.sol",
+        "../../utils/introspection/IERC1820Registry.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ERC777"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/token/ERC777/IERC777.sol": {
+      "lastModificationDate": 1629305046388,
+      "contentHash": "2e58a223d55cc7d9b53fb3f3b6a5d2d0",
+      "sourceName": "@openzeppelin/contracts/token/ERC777/IERC777.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC777"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol": {
+      "lastModificationDate": 1629305046388,
+      "contentHash": "28db9244cc847ef290e8ca4576cd920e",
+      "sourceName": "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC777Recipient"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/token/ERC777/IERC777Sender.sol": {
+      "lastModificationDate": 1629305046388,
+      "contentHash": "ff3b94060a5b0f1f5364dc872b9d0a66",
+      "sourceName": "@openzeppelin/contracts/token/ERC777/IERC777Sender.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC777Sender"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1629305046388,
+      "contentHash": "0eac3e1a83ee62326ca007811285b274",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+      "lastModificationDate": 1629305046372,
+      "contentHash": "c5f6c4e4df069c789e7d84b4c3011913",
+      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1629305046372,
+      "contentHash": "851485d5b925529b1a2f34a0be077891",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Context"
+      ]
+    },
+    "/home/parmcoder/muic/Deguild-Project/magic-shop-contracts/node_modules/@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol": {
+      "lastModificationDate": 1629305046388,
+      "contentHash": "c223419630b736f8dbe292b20b851be6",
+      "sourceName": "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol",
+      "solcConfig": {
+        "version": "0.8.4",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC1820Registry"
       ]
     }
   }

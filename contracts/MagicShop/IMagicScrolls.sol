@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IMagicScroll {
+interface IMagicScrolls {
 
-    event StateChanged(uint8 state);
+    event StateChanged(uint256 scrollId, uint8 scrollState);
 
     /**
      * @dev Returns the token collection name.
@@ -35,6 +35,6 @@ interface IMagicScroll {
      */
     function burn(uint256 id) external;
 
-    function buyScroll(address buyer) external returns(uint256);
+    function buyScroll(address buyer, uint256 scroll) external returns(uint256);
 
 }

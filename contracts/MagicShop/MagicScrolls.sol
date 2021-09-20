@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../SkillCertificates/ISkillCertificate.sol";
 import "./IMagicScrolls.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -10,6 +11,9 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
 contract MagicScrolls is Context, Ownable, IMagicScrolls {
+    /**
+     * Libraries required, please use these!
+     */
     using Counters for Counters.Counter;
     using Strings for uint256;
     using Address for address;
@@ -17,16 +21,24 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     struct MagicScroll {
         uint256 scrollID;
         uint256 price;
-        address prerequisite; //certification required
+        address prerequisite; //certification required, check for existence and validity
         uint8 state;
         bool lessonIncluded;
-        string scrollURI;
     }
 
+    /**
+     * @dev Classic ERC721 mapping, tracking down the scrolls existed
+     * We need to know exactly what happened to the scroll
+     * so we keep track of those scrolls here.
+     */
     mapping(uint256 => address) private _owners;
     mapping(uint256 => MagicScroll) private _scrollCreated;
     mapping(uint256 => MagicScroll) private _scrollTypes;
 
+    /**
+     * @dev Classic ERC1155 mapping, tracking down the balances of each address
+     * Given a scroll type and an address, we know the quantity!
+     */
     mapping(uint256 => mapping(address => uint256)) private _balances;
 
     address _addressDGC;
@@ -35,6 +47,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     string _baseURIscroll;
     Counters.Counter tracker = Counters.Counter(0);
     Counters.Counter variations = Counters.Counter(0);
+    IERC20 _DGC = IERC20(_addressDGC);
 
     constructor(
         string memory name_,
@@ -46,6 +59,87 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         _symbol = symbol_;
         _addressDGC = addressDGC_;
         _baseURIscroll = baseURI_;
+    }
+
+    /**
+     * @dev See {IERC1155-balanceOf}.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     */
+    function balanceOfOne(address account, uint256 id)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        require(
+            account != address(0),
+            "ERC1155: balance query for the zero address"
+        );
+        return _balances[id][account];
+    }
+
+    /**
+     * @dev See {IERC721-ownerOf}.
+     */
+    function ownerOf(uint256 id) public view virtual returns (address) {
+        address owner = _owners[id];
+        require(
+            owner != address(0),
+            "ERC721: owner query for nonexistent token"
+        );
+        return owner;
+    }
+
+    /**
+     * @dev Telling what this address own
+     */
+    function balanceUserOwned(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {
+        uint256 balances = 0;
+
+        for (uint256 i = 0; i < tracker.current(); ++i) {
+            if (ownerOf(i) == account) {
+                balances++;
+            }
+        }
+
+        uint256[] memory ownedBalances = new uint256[](balances); 
+        
+        for (uint256 i = 0; i < tracker.current(); ++i) {
+            if (ownerOf(i) == account) {
+                ownedBalances[--balances] = i;
+            }
+        }
+        return ownedBalances;
+    }
+
+    /**
+     * @dev Check every type of scroll in one account
+     *
+     */
+    function balanceOfAll(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {
+        uint256[] memory batchBalances = new uint256[](variations.current());
+
+        for (uint256 i = 0; i < variations.current(); ++i) {
+            batchBalances[i] = balanceOfOne(account, i);
+        }
+
+        return batchBalances;
     }
 
     /**
@@ -104,7 +198,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
 
     function burn(uint256 id) external virtual override {
         require(
-            _msgSender() == _owners[id],
+            _msgSender() == _owners[id] || _msgSender() == owner(),
             "You are not the owner of this item"
         );
         _owners[id] = address(0);
@@ -118,7 +212,11 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         override
         returns (uint256)
     {
-        IERC20 _DGC = IERC20(_addressDGC);
+        // check for validity to buy from interface for certificate
+        require(
+            isPurchasableScroll(scrollType),
+            "Please earn the prerequisite first!"
+        );
         _DGC.transferFrom(buyer, owner(), _scrollTypes[scrollType].price);
         _owners[tracker.current()] = buyer;
         tracker.increment();
@@ -126,22 +224,34 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     function addScroll(
-        uint256 _scrollID,
-        address _prerequisite,
-        bool _lessonIncluded,
-        uint256 _price,
-        string memory _scrollURI
-    ) external virtual returns (uint256) {
+        uint256 scrollID,
+        address prerequisite,
+        bool lessonIncluded,
+        uint256 price
+    ) external virtual override returns (uint256) {
         _scrollTypes[variations.current()] = MagicScroll({
-            scrollID: _scrollID,
-            price: _price,
-            prerequisite: _prerequisite, //certification required
+            scrollID: scrollID,
+            price: price,
+            prerequisite: prerequisite, //certification required
             state: 1,
-            lessonIncluded: _lessonIncluded,
-            scrollURI: _scrollURI
+            lessonIncluded: lessonIncluded
         });
         variations.increment();
         return variations.current();
+    }
+
+    function isPurchasableScroll(uint256 scrollType)
+        public
+        virtual
+        returns (bool)
+    {
+        require(
+            ISkillCertificate(_scrollTypes[scrollType].prerequisite).verify(
+                _msgSender()
+            ),
+            "You are not verified"
+        );
+        return true;
     }
 
     function _exists(uint256 tokenId) internal view virtual returns (bool) {

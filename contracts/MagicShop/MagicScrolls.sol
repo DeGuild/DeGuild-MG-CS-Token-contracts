@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import "../SkillCertificates/ISkillCertificate.sol";
 import "./IMagicScrolls.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
 
 contract MagicScrolls is Context, Ownable, IMagicScrolls {
     /**
@@ -34,6 +34,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
      */
     mapping(uint256 => address) private _owners;
     mapping(uint256 => MagicScroll) private _scrollCreated;
+
     mapping(uint256 => MagicScroll) private _scrollTypes;
 
     /**
@@ -220,6 +221,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         );
         _DGC.transferFrom(buyer, owner(), _scrollTypes[scrollType].price);
         _owners[tracker.current()] = buyer;
+        _balances[scrollType][buyer]++;
         tracker.increment();
         return tracker.current();
     }

@@ -115,7 +115,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     {
         uint256 balances = 0;
 
-        for (uint256 i = 0; i < tracker.current(); ++i) {
+        for (uint256 i = 0; i < tracker.current(); i++) {
             if (ownerOf(i) == account) {
                 balances++;
             }
@@ -123,7 +123,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
 
         uint256[] memory ownedBalances = new uint256[](balances);
 
-        for (uint256 i = 0; i < tracker.current(); ++i) {
+        for (uint256 i = tracker.current()-1; i > 0; i--) {
             if (ownerOf(i) == account) {
                 ownedBalances[--balances] = i;
             }

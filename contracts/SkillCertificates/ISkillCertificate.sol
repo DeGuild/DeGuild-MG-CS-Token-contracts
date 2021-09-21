@@ -4,20 +4,27 @@ pragma solidity ^0.8.0;
 interface ISkillCertificate {
     /**
      * NFT style interface, but it does not simple transfer like other ERC721 and ERC1155
-     * It requires DGC to work around with. Basically, we try to make a shop out of it!
+     * It requires MagicScrolls to work around with. Basically, we try to make a certificate out of it!
      */
 
     event CertificateMinted(uint256 scrollId);
 
+    /**
+     * @dev Returns the owner of the `id` token.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     */
     function ownerOf(uint256 id) external view returns (address);
 
     /**
-     * @dev Returns the token collection name.
+     * @dev Returns the shop name.
      */
     function name() external view returns (string memory);
 
     /**
-     * @dev Returns the token collection symbol.
+     * @dev Returns the shop symbol.
      */
     function symbol() external view returns (string memory);
 
@@ -33,10 +40,13 @@ interface ISkillCertificate {
     
 
     /**
-     * @dev When user want to get a certificate, mint this item.
+     * @dev When user want to get a certificate, mint this item and burn a scroll.
      */
     function mint(address to, address shop,  uint256 scrollOwnedID) external;
 
+    /**
+     * @dev returns the validity of the certificate of student.
+     */
     function verify(address student)
         external view
         returns (bool);

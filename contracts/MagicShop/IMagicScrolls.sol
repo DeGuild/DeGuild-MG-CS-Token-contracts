@@ -83,6 +83,7 @@ interface IMagicScrolls {
         uint256 _scrollID,
         address _prerequisite,
         bool _lessonIncluded,
+        bool hasPrerequisite,
         uint256 _price
     ) external returns (uint256);
 }

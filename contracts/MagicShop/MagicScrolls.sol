@@ -24,6 +24,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         address prerequisite; //certification required, check for existence and validity
         uint8 state;
         bool lessonIncluded;
+        bool hasPrerequisite;
     }
 
     /**
@@ -85,7 +86,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     /**
      * @dev See {IERC721-ownerOf}.
      */
-    function ownerOf(uint256 id) public view virtual returns (address) {
+    function ownerOf(uint256 id) public view virtual override returns (address) {
         address owner = _owners[id];
         require(
             owner != address(0),
@@ -227,6 +228,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         uint256 scrollID,
         address prerequisite,
         bool lessonIncluded,
+        bool hasPrerequisite,
         uint256 price
     ) external virtual override returns (uint256) {
         _scrollTypes[variations.current()] = MagicScroll({
@@ -234,17 +236,20 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             price: price,
             prerequisite: prerequisite, //certification required
             state: 1,
-            lessonIncluded: lessonIncluded
+            lessonIncluded: lessonIncluded,
+            hasPrerequisite: hasPrerequisite
         });
         variations.increment();
         return variations.current();
     }
 
+    //This function suppose to be a view function
     function isPurchasableScroll(uint256 scrollType)
         public
         virtual
         returns (bool)
     {
+        if(!_scrollTypes[scrollType].hasPrerequisite) return true;
         require(
             ISkillCertificate(_scrollTypes[scrollType].prerequisite).verify(
                 _msgSender()

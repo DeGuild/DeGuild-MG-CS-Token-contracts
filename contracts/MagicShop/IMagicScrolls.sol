@@ -10,8 +10,16 @@ interface IMagicScrolls {
     event StateChanged(uint256 scrollId, uint8 scrollState);
     event ScrollBought(
         uint256 scrollId,
-        uint256 scrollType,
-        uint256 newBalance
+        uint256 scrollType
+    );
+
+    event ScrollAdded(
+        uint256 scrollID,
+        uint256 price,
+        address prerequisite,
+        bool lessonIncluded,
+        bool hasPrerequisite,
+        bool available
     );
 
     /**
@@ -49,7 +57,7 @@ interface IMagicScrolls {
      * @dev Returns the token collection name.
      */
     function name() external view returns (string memory);
-
+    function numberOfScrollTypes() external view returns(uint256);
     /**
      * @dev Returns the token collection symbol.
      */
@@ -86,4 +94,6 @@ interface IMagicScrolls {
         bool hasPrerequisite,
         uint256 _price
     ) external returns (uint256);
+
+    function sealScroll(uint256 scrollType) external;
 }

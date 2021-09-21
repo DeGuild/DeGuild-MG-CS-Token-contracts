@@ -7,9 +7,9 @@ interface ISkillCertificate {
      * It requires DGC to work around with. Basically, we try to make a shop out of it!
      */
 
-    event StateChanged(uint256 scrollId, uint8 scrollState);
-    event CertificateMinted(
-        uint256 scrollId);
+    event CertificateMinted(uint256 scrollId);
+
+    function ownerOf(uint256 id) external view returns (address);
 
     /**
      * @dev Returns the token collection name.
@@ -31,13 +31,14 @@ interface ISkillCertificate {
      */
     function forceBurn(uint256 id) external;
     
+
     /**
-     * @dev When user want to get a certificate, burn this item.
+     * @dev When user want to get a certificate, mint this item.
      */
-    function burn(uint256 id) external;
+    function mint(address to, address shop,  uint256 scrollOwnedID) external;
 
     function verify(address student)
-        external
+        external view
         returns (bool);
 
 }

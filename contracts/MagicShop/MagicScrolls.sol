@@ -22,6 +22,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         uint256 scrollID;
         uint256 price;
         address prerequisite; //certification required, check for existence and validity
+        address certificate;
         uint8 state;
         bool lessonIncluded;
         bool hasPrerequisite;
@@ -246,8 +247,8 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             "This scroll is no longer burnable."
         );
         require(
-            _msgSender() == owner(),
-            "You are not the owner of this shop, burning is reserved for the shop owner only."
+            _msgSender() == _scrollCreated[id].certificate || _msgSender() == owner(),
+            "You are not the certificate manager, burning is reserved for the claiming certificate only."
         );
         _owners[id] = address(0);
         _scrollCreated[id].state = 0; //burned state id
@@ -276,6 +277,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     function addScroll(
         uint256 scrollID,
         address prerequisite,
+        address certificate,
         bool lessonIncluded,
         bool hasPrerequisite,
         uint256 price
@@ -283,6 +285,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         _scrollTypes[variations.current()] = MagicScroll({
             scrollID: scrollID,
             price: price,
+            certificate: certificate,
             prerequisite: prerequisite, //certification required
             state: 1,
             lessonIncluded: lessonIncluded,
@@ -293,6 +296,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             scrollID,
             price,
             prerequisite,
+            certificate,
             lessonIncluded,
             hasPrerequisite,
             true
@@ -307,6 +311,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             _scrollTypes[scrollType].scrollID,
             _scrollTypes[scrollType].price,
             _scrollTypes[scrollType].prerequisite,
+            _scrollTypes[scrollType].certificate,
             _scrollTypes[scrollType].lessonIncluded,
             _scrollTypes[scrollType].hasPrerequisite,
             _scrollTypes[scrollType].available

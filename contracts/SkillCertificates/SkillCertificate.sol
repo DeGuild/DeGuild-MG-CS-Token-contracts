@@ -19,7 +19,7 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
 
     address _addressDGC;
     string _name;
-    uint256 _scrollID;
+    address _addressShop;
     string _symbol;
     string _baseURIscroll;
     Counters.Counter tracker = Counters.Counter(0);
@@ -28,12 +28,12 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
         string memory name_,
         string memory symbol_,
         string memory baseURI_,
-        uint256 scrollID_
+        address addressShop_
     ) {
         _name = name_;
         _symbol = symbol_;
         _baseURIscroll = baseURI_;
-        _scrollID = scrollID_;
+        _addressShop = addressShop_;
     }
 
     /**
@@ -94,13 +94,20 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**
      * @dev When user want to get a certificate, burn this item.
      */
-    function mint(address to, address shop,  uint256 scrollOwnedID) external virtual override{
-        IMagicScrolls(shop).burn(scrollOwnedID);
+    function mint(address to, uint256 scrollOwnedID) external virtual override{
+        IMagicScrolls(_addressShop).burn(scrollOwnedID);
         _mint(to);
     }
 
     function verify(address student) external view virtual override returns (bool){
         return _certified[student];
+    }
+
+    /**
+     * @dev Returns the token collection symbol.
+     */
+    function shop() external view virtual override returns (address) {
+        return _addressShop;
     }
 
     function _exists(uint256 tokenId) internal view virtual returns (bool) {

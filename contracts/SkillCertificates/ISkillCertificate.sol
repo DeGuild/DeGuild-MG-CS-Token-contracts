@@ -28,6 +28,8 @@ interface ISkillCertificate {
      */
     function symbol() external view returns (string memory);
 
+    function shop() external view returns (address);
+
     /**
      * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
      */
@@ -42,7 +44,7 @@ interface ISkillCertificate {
     /**
      * @dev When user want to get a certificate, mint this item and burn a scroll.
      */
-    function mint(address to, address shop,  uint256 scrollOwnedID) external;
+    function mint(address to, uint256 scrollOwnedID) external;
 
     /**
      * @dev returns the validity of the certificate of student.

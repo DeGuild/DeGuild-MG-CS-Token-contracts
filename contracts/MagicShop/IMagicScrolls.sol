@@ -27,6 +27,7 @@ interface IMagicScrolls {
         uint256 scrollID,
         uint256 price,
         address prerequisite,
+        address certificate,
         bool lessonIncluded,
         bool hasPrerequisite,
         bool available
@@ -114,11 +115,12 @@ interface IMagicScrolls {
      * @dev When owner want to add a scroll, returns the newest scroll type id.
      */
     function addScroll(
-        uint256 _scrollID,
-        address _prerequisite,
-        bool _lessonIncluded,
+        uint256 scrollID,
+        address prerequisite,
+        address certificate,
+        bool lessonIncluded,
         bool hasPrerequisite,
-        uint256 _price
+        uint256 price
     ) external returns (uint256);
 
     /**

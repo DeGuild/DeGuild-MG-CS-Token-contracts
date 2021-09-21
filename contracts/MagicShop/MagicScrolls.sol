@@ -255,20 +255,23 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         emit StateChanged(id, _scrollCreated[id].state);
     }
 
-    function buyScroll(address buyer, uint256 scrollType)
+    function buyScroll(uint256 scrollType)
         external
+        payable
         virtual
         override
         returns (uint256)
     {
+        uint256 gasForMagicShop = msg.value;
+        require(gasForMagicShop > 100, "You need to send some ether");
         // check for validity to buy from interface for certificate
         require(
             isPurchasableScroll(scrollType),
             "Please earn the prerequisite first!"
         );
-        _DGC.transferFrom(buyer, owner(), _scrollTypes[scrollType].price);
-        _owners[tracker.current()] = buyer;
-        _balances[scrollType][buyer]++;
+        _DGC.transferFrom(_msgSender(), owner(), _scrollTypes[scrollType].price);
+        _owners[tracker.current()] = _msgSender();
+        _balances[scrollType][_msgSender()]++;
         emit ScrollBought(tracker.current(), scrollType);
         tracker.increment();
         return tracker.current();

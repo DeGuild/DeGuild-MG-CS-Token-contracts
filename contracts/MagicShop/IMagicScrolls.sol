@@ -107,8 +107,8 @@ interface IMagicScrolls {
     /**
      * @dev When user want to get a scroll, transfer DGC to owner of the shop, returns the newest minted id.
      */
-    function buyScroll(address buyer, uint256 scroll)
-        external
+    function buyScroll(uint256 scroll)
+        external payable
         returns (uint256);
 
     /**

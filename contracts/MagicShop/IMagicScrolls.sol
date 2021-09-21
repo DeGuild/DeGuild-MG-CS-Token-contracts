@@ -13,6 +13,15 @@ interface IMagicScrolls {
         uint256 scrollType
     );
 
+    event ScrollAdded(
+        uint256 scrollID,
+        uint256 price,
+        address prerequisite,
+        bool lessonIncluded,
+        bool hasPrerequisite,
+        bool available
+    );
+
     /**
      * @dev Returns the amount of tokens of token type `id` owned by `account`.
      *
@@ -48,7 +57,7 @@ interface IMagicScrolls {
      * @dev Returns the token collection name.
      */
     function name() external view returns (string memory);
-
+    function numberOfScrollTypes() external view returns(uint256);
     /**
      * @dev Returns the token collection symbol.
      */
@@ -85,4 +94,6 @@ interface IMagicScrolls {
         bool hasPrerequisite,
         uint256 _price
     ) external returns (uint256);
+
+    function sealScroll(uint256 scrollType) external;
 }

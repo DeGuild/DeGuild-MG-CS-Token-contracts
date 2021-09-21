@@ -25,6 +25,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         uint8 state;
         bool lessonIncluded;
         bool hasPrerequisite;
+        bool available;
     }
 
     /**
@@ -87,7 +88,13 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     /**
      * @dev See {IERC721-ownerOf}.
      */
-    function ownerOf(uint256 id) public view virtual override returns (address) {
+    function ownerOf(uint256 id)
+        public
+        view
+        virtual
+        override
+        returns (address)
+    {
         address owner = _owners[id];
         require(
             owner != address(0),
@@ -114,8 +121,8 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             }
         }
 
-        uint256[] memory ownedBalances = new uint256[](balances); 
-        
+        uint256[] memory ownedBalances = new uint256[](balances);
+
         for (uint256 i = 0; i < tracker.current(); ++i) {
             if (ownerOf(i) == account) {
                 ownedBalances[--balances] = i;
@@ -145,10 +152,38 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     /**
+     * @dev Check every type of scroll in one account
+     *
+     */
+    function scrollTypes() public view virtual returns (MagicScroll[] memory) {
+        MagicScroll[] memory batchBalances = new MagicScroll[](
+            variations.current()
+        );
+
+        for (uint256 i = 0; i < variations.current(); ++i) {
+            batchBalances[i] = _scrollTypes[i];
+        }
+        return batchBalances;
+    }
+
+    /**
      * @dev Returns the token collection name.
      */
     function name() external view virtual override returns (string memory) {
         return _name;
+    }
+
+    /**
+     * @dev Returns the token collection name.
+     */
+    function numberOfScrollTypes()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        return variations.current();
     }
 
     /**
@@ -181,8 +216,9 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     function forceCancel(uint256 id) external virtual override {
+        require(_exists(id), "Nonexistent token");
         require(
-            _msgSender() == _owners[id],
+            _msgSender() == _owners[id] || _msgSender() == owner(),
             "You are not the owner of this item"
         );
         _scrollCreated[id].state = 99; //Cancelled state id
@@ -190,8 +226,13 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     function consume(uint256 id) external virtual override {
+        require(_exists(id), "Nonexistent token");
         require(
-            _msgSender() == _owners[id],
+            _scrollCreated[id].state == 1,
+            "This scroll is no longer consumable."
+        );
+        require(
+            _msgSender() == _owners[id] || _msgSender() == owner(),
             "You are not the owner of this item"
         );
         _scrollCreated[id].state = 2; //consumed state id
@@ -199,9 +240,14 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     function burn(uint256 id) external virtual override {
+        require(_exists(id), "Nonexistent token");
         require(
-            _msgSender() == _owners[id] || _msgSender() == owner(),
-            "You are not the owner of this item"
+            _scrollCreated[id].state == 1 || _scrollCreated[id].state == 2,
+            "This scroll is no longer burnable."
+        );
+        require(
+            _msgSender() == owner(),
+            "You are not the owner of this shop, burning is reserved for the shop owner only."
         );
         _owners[id] = address(0);
         _scrollCreated[id].state = 0; //burned state id
@@ -240,10 +286,31 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             prerequisite: prerequisite, //certification required
             state: 1,
             lessonIncluded: lessonIncluded,
-            hasPrerequisite: hasPrerequisite
+            hasPrerequisite: hasPrerequisite,
+            available: true
         });
+        emit ScrollAdded(
+            scrollID,
+            price,
+            prerequisite,
+            lessonIncluded,
+            hasPrerequisite,
+            true
+        );
         variations.increment();
         return variations.current();
+    }
+
+    function sealScroll(uint256 scrollType) external virtual override {
+        _scrollTypes[scrollType].available = false;
+        emit ScrollAdded(
+            _scrollTypes[scrollType].scrollID,
+            _scrollTypes[scrollType].price,
+            _scrollTypes[scrollType].prerequisite,
+            _scrollTypes[scrollType].lessonIncluded,
+            _scrollTypes[scrollType].hasPrerequisite,
+            _scrollTypes[scrollType].available
+        );
     }
 
     //This function suppose to be a view function
@@ -253,7 +320,8 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         virtual
         returns (bool)
     {
-        if(!_scrollTypes[scrollType].hasPrerequisite) return true;
+        require(_existsType(scrollType), "Scroll does not exist.");
+        if (!_scrollTypes[scrollType].hasPrerequisite) return true;
         require(
             ISkillCertificate(_scrollTypes[scrollType].prerequisite).verify(
                 _msgSender()
@@ -265,6 +333,10 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
 
     function _exists(uint256 tokenId) internal view virtual returns (bool) {
         return _owners[tokenId] != address(0);
+    }
+
+    function _existsType(uint256 tokenId) internal view virtual returns (bool) {
+        return variations.current() >= tokenId;
     }
 
     /**

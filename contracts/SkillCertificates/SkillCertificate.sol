@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ISkillCertificate.sol";
+import "contracts/MagicShop/IMagicScrolls.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -93,7 +94,8 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**
      * @dev When user want to get a certificate, burn this item.
      */
-    function mint(address to) external virtual override{
+    function mint(address to, address shop,  uint256 scrollOwnedID) external virtual override{
+        IMagicScrolls(shop).burn(scrollOwnedID);
         _mint(to);
     }
 

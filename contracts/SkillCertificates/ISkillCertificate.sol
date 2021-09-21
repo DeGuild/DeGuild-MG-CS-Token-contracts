@@ -35,7 +35,7 @@ interface ISkillCertificate {
     /**
      * @dev When user want to get a certificate, mint this item.
      */
-    function mint(address to) external;
+    function mint(address to, address shop,  uint256 scrollOwnedID) external;
 
     function verify(address student)
         external view

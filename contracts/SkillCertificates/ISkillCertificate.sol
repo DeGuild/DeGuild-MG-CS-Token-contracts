@@ -7,9 +7,8 @@ interface ISkillCertificate {
      * It requires DGC to work around with. Basically, we try to make a shop out of it!
      */
 
-    event CertificateMinted(
-        uint256 scrollId);
-        
+    event CertificateMinted(uint256 scrollId);
+
     function ownerOf(uint256 id) external view returns (address);
 
     /**
@@ -39,7 +38,7 @@ interface ISkillCertificate {
     function mint(address to) external;
 
     function verify(address student)
-        external
+        external view
         returns (bool);
 
 }

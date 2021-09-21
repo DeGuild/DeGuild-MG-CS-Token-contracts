@@ -10,8 +10,7 @@ interface IMagicScrolls {
     event StateChanged(uint256 scrollId, uint8 scrollState);
     event ScrollBought(
         uint256 scrollId,
-        uint256 scrollType,
-        uint256 newBalance
+        uint256 scrollType
     );
 
     /**

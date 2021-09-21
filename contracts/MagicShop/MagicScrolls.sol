@@ -222,6 +222,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         _DGC.transferFrom(buyer, owner(), _scrollTypes[scrollType].price);
         _owners[tracker.current()] = buyer;
         _balances[scrollType][buyer]++;
+        emit ScrollBought(tracker.current(), scrollType);
         tracker.increment();
         return tracker.current();
     }
@@ -248,6 +249,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     //This function suppose to be a view function
     function isPurchasableScroll(uint256 scrollType)
         public
+        view
         virtual
         returns (bool)
     {

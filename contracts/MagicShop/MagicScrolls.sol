@@ -45,13 +45,13 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
      */
     mapping(uint256 => mapping(address => uint256)) private _balances;
 
-    address _addressDGC;
-    string _name;
-    string _symbol;
-    string _baseURIscroll;
-    Counters.Counter tracker = Counters.Counter(0);
-    Counters.Counter variations = Counters.Counter(0);
-    IERC20 _DGC = IERC20(_addressDGC);
+    address private _addressDGC;
+    string private _name;
+    string private _symbol;
+    string private _baseURIscroll;
+    Counters.Counter private tracker = Counters.Counter(0);
+    Counters.Counter private variations = Counters.Counter(0);
+    IERC20 private _DGC;
 
     constructor(
         string memory name_,
@@ -63,6 +63,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         _symbol = symbol_;
         _addressDGC = addressDGC_;
         _baseURIscroll = baseURI_;
+        _DGC = IERC20(_addressDGC);
     }
 
     /**
@@ -124,7 +125,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
 
         uint256[] memory ownedBalances = new uint256[](balances);
 
-        for (uint256 i = tracker.current()-1; i > 0; i--) {
+        for (uint256 i = tracker.current() - 1; i > 0; i--) {
             if (ownerOf(i) == account) {
                 ownedBalances[--balances] = i;
             }
@@ -165,6 +166,38 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             batchBalances[i] = _scrollTypes[i];
         }
         return batchBalances;
+    }
+
+    /**
+     * @dev Check every type of scroll in one account
+     *
+     */
+    function scrollTypeInfo(uint256 typeId)
+        public
+        view
+        virtual
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            address,
+            address,
+            bool,
+            bool,
+            bool
+        )
+    {
+        require(_existsType(typeId), "This scroll type does not exist");
+        return (
+            typeId,
+            _scrollTypes[typeId].scrollID,
+            _scrollTypes[typeId].price,
+            _scrollTypes[typeId].prerequisite,
+            _scrollTypes[typeId].certificate,
+            _scrollTypes[typeId].lessonIncluded,
+            _scrollTypes[typeId].hasPrerequisite,
+            _scrollTypes[typeId].available
+        );
     }
 
     /**
@@ -247,7 +280,8 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             "This scroll is no longer burnable."
         );
         require(
-            _msgSender() == _scrollCreated[id].certificate || _msgSender() == owner(),
+            _msgSender() == _scrollCreated[id].certificate ||
+                _msgSender() == owner(),
             "You are not the certificate manager, burning is reserved for the claiming certificate only."
         );
         _owners[id] = address(0);
@@ -257,19 +291,24 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
 
     function buyScroll(uint256 scrollType)
         external
-        payable
         virtual
         override
         returns (uint256)
     {
-        uint256 gasForMagicShop = msg.value;
-        require(gasForMagicShop > 100, "You need to send some ether");
         // check for validity to buy from interface for certificate
         require(
             isPurchasableScroll(scrollType),
             "Please earn the prerequisite first!"
         );
-        _DGC.transferFrom(_msgSender(), owner(), _scrollTypes[scrollType].price);
+        require(
+            _DGC.transferFrom(
+                _msgSender(),
+                owner(),
+                _scrollTypes[scrollType].price
+            ),
+            "Cannot transfer DGC, approve the contract or buy more DGC!"
+        );
+
         _owners[tracker.current()] = _msgSender();
         _balances[scrollType][_msgSender()]++;
         emit ScrollBought(tracker.current(), scrollType);
@@ -296,6 +335,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             available: true
         });
         emit ScrollAdded(
+            variations.current(),
             scrollID,
             price,
             prerequisite,
@@ -311,6 +351,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     function sealScroll(uint256 scrollType) external virtual override {
         _scrollTypes[scrollType].available = false;
         emit ScrollAdded(
+            scrollType,
             _scrollTypes[scrollType].scrollID,
             _scrollTypes[scrollType].price,
             _scrollTypes[scrollType].prerequisite,
@@ -344,7 +385,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     function _existsType(uint256 tokenId) internal view virtual returns (bool) {
-        return variations.current() >= tokenId;
+        return variations.current() > tokenId;
     }
 
     /**

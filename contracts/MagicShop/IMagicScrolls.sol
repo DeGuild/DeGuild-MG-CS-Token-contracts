@@ -24,6 +24,7 @@ interface IMagicScrolls {
      * @dev From logging, we show that the a type of scroll has been added to the list
      */
     event ScrollAdded(
+        uint256 scrollType,
         uint256 scrollID,
         uint256 price,
         address prerequisite,
@@ -108,7 +109,7 @@ interface IMagicScrolls {
      * @dev When user want to get a scroll, transfer DGC to owner of the shop, returns the newest minted id.
      */
     function buyScroll(uint256 scroll)
-        external payable
+        external 
         returns (uint256);
 
     /**

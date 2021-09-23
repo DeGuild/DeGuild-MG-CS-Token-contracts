@@ -67,11 +67,23 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         _DGC = IERC20(addressDGC_);
     }
 
-    function isCertificateManager(address manager) public view virtual override returns (bool){
+    function isCertificateManager(address manager)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _certificateManagers[manager];
     }
 
-    function approveCertificateManager(address manager) external virtual override onlyOwner returns (bool){
+    function approveCertificateManager(address manager)
+        external
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
         _certificateManagers[manager] = true;
         return true;
     }
@@ -451,13 +463,11 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         uint256 scrollType = _scrollCreated[id].scrollID;
         require(_exists(id), "Nonexistent token");
         require(
-            isCertificateManager(_msgSender()) ||
-                _msgSender() == owner(),
+            isCertificateManager(_msgSender()),
             "You are not the certificate manager, burning is reserved for the claiming certificate only."
         );
         require(
-            isCertificateManager(_msgSender())? ISkillCertificate(_msgSender()).typeAccepted() == scrollType :
-            _msgSender() == owner(),
+            ISkillCertificate(_msgSender()).typeAccepted() == scrollType,
             "Wrong type of scroll to be burned."
         );
         require(
@@ -471,12 +481,8 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         emit StateChanged(id, _scrollCreated[id].state);
     }
 
-    function _forceCancel(uint256 id) internal virtual {
+    function _forceCancel(uint256 id) internal virtual onlyOwner {
         require(_exists(id), "Nonexistent token");
-        require(
-            _msgSender() == _owners[id] || _msgSender() == owner(),
-            "You are not the owner of this item"
-        );
         _scrollCreated[id].state = 99; //Cancelled state id
         emit StateChanged(id, _scrollCreated[id].state);
     }
@@ -485,7 +491,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         require(_exists(id), "Nonexistent token");
 
         require(
-            _msgSender() == _owners[id] || _msgSender() == owner(),
+            _msgSender() == _owners[id],
             "You are not the owner of this item"
         );
         require(

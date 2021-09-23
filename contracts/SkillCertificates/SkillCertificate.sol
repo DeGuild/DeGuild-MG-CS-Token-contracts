@@ -87,15 +87,15 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**
      * @dev When there is a problem, cancel this item.
      */
-    function forceBurn(uint256 id) external virtual override{
+    function forceBurn(uint256 id) external virtual override onlyOwner{
         _burn(id);
     }
 
     /**
      * @dev When user want to get a certificate, burn this item.
      */
-    function mint(address to, uint256 scrollOwnedID) external virtual override{
-        IMagicScrolls(_addressShop).burn(scrollOwnedID);
+    function mint(address to, uint256 scrollOwnedID) external virtual override onlyOwner{
+        require(IMagicScrolls(_addressShop).burn(scrollOwnedID), "Cannot burn the scroll");
         _mint(to);
     }
 

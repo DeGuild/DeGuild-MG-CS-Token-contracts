@@ -6,8 +6,7 @@ pragma solidity ^0.8.0;
  * It requires DGC & SkillCertificate to work around with. Basically, we try to make a shop out of it!
  */
 interface IMagicScrolls {
-
-     /**
+    /**
      * @dev From logging, we show that the minted scroll has changed its state
      */
     event StateChanged(uint256 scrollId, uint8 scrollState);
@@ -15,20 +14,15 @@ interface IMagicScrolls {
     /**
      * @dev From logging, we show that the a scroll of one type has been minted
      */
-    event ScrollBought(
-        uint256 scrollId,
-        uint256 scrollType
-    );
+    event ScrollBought(uint256 scrollId, uint256 scrollType);
 
     /**
      * @dev From logging, we show that the a type of scroll has been added to the list
      */
     event ScrollAdded(
-        uint256 scrollType,
         uint256 scrollID,
         uint256 price,
         address prerequisite,
-        address certificate,
         bool lessonIncluded,
         bool hasPrerequisite,
         bool available
@@ -53,7 +47,7 @@ interface IMagicScrolls {
      * - `id` must exist.
      */
     function ownerOf(uint256 id) external view returns (address);
-    
+
     /**
      * @dev Returns the shop name.
      */
@@ -68,11 +62,11 @@ interface IMagicScrolls {
      * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
      */
     function tokenURI(uint256 tokenId) external view returns (string memory);
-    
+
     /**
      * @dev Returns the number of scroll types available to be bought
      */
-    function numberOfScrollTypes() external view returns(uint256);
+    function numberOfScrollTypes() external view returns (uint256);
 
     /**
      * @dev Returns the balance that this account owned, according to type
@@ -93,39 +87,65 @@ interface IMagicScrolls {
     /**
      * @dev When there is a problem, cancel this item.
      */
-    function forceCancel(uint256 id) external;
+    function forceCancel(uint256 id) external returns (bool);
 
     /**
      * @dev When user wants to take a test, consume this item.
      */
-    function consume(uint256 id) external;
+    function consume(uint256 id) external returns (bool);
 
     /**
      * @dev When user want to get a certificate, burn this item.
      */
-    function burn(uint256 id) external;
+    function burn(uint256 id) external returns (bool);
 
     /**
      * @dev When user want to get a scroll, transfer DGC to owner of the shop, returns the newest minted id.
      */
-    function buyScroll(uint256 scroll)
-        external 
-        returns (uint256);
+    function buyScroll(uint256 scroll) external returns (bool);
 
     /**
      * @dev When owner want to add a scroll, returns the newest scroll type id.
      */
     function addScroll(
-        uint256 scrollID,
         address prerequisite,
-        address certificate,
         bool lessonIncluded,
         bool hasPrerequisite,
         uint256 price
-    ) external returns (uint256);
+    ) external returns (bool);
 
     /**
      * @dev When owner want to seal a scroll, it will check for existence and seal them forever (not mintable anymore and cannot be used later on).
      */
-    function sealScroll(uint256 scrollType) external;
+    function sealScroll(uint256 scrollType) external returns (bool);
+
+    /**
+     * @dev Returns the acceptable token name.
+     */
+    function deguildCoin() external view returns (address);
+
+    function scrollTypeInfo(uint256 typeId)
+        external
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            address,
+            bool,
+            bool,
+            bool
+        );
+
+    function scrollInfo(uint256 tokenId)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            address,
+            bool,
+            bool,
+            bool
+        );
 }

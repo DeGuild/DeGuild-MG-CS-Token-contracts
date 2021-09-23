@@ -114,6 +114,12 @@ interface IMagicScrolls {
         uint256 price
     ) external returns (bool);
 
+    function isCertificateManager(address manager) external view returns (bool);
+
+    function approveCertificateManager(address manager)
+        external
+        returns (bool);
+
     /**
      * @dev When owner want to seal a scroll, it will check for existence and seal them forever (not mintable anymore and cannot be used later on).
      */

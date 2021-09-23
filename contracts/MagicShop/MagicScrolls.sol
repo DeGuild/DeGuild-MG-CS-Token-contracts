@@ -67,11 +67,11 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         _DGC = IERC20(addressDGC_);
     }
 
-    function isCertificateManager(address manager) public view virtual returns (bool){
+    function isCertificateManager(address manager) public view virtual override returns (bool){
         return _certificateManagers[manager];
     }
 
-    function approveCertificateManager(address manager) external virtual onlyOwner returns (bool){
+    function approveCertificateManager(address manager) external virtual override onlyOwner returns (bool){
         _certificateManagers[manager] = true;
         return true;
     }
@@ -456,8 +456,8 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             "You are not the certificate manager, burning is reserved for the claiming certificate only."
         );
         require(
-            _scrollTypes[scrollType].hasPrerequisite ? 
-            ISkillCertificate(_scrollTypes[scrollType].prerequisite).typeAccepted() == scrollType: true,
+            isCertificateManager(_msgSender())? ISkillCertificate(_msgSender()).typeAccepted() == scrollType :
+            _msgSender() == owner(),
             "Wrong type of scroll to be burned."
         );
         require(

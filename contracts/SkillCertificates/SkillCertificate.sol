@@ -162,7 +162,7 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
         );
 
         _owners[tracker.current()] = to;
-        emit CertificateMinted(tracker.current());
+        emit CertificateMinted(to, tracker.current());
         tracker.increment();
         _certified[to] = true;
     }

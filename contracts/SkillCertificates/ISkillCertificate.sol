@@ -7,7 +7,7 @@ interface ISkillCertificate {
      * It requires MagicScrolls to work around with. Basically, we try to make a certificate out of it!
      */
 
-    event CertificateMinted(uint256 scrollId);
+    event CertificateMinted(address student, uint256 scrollId);
 
     /**
      * @dev Returns the owner of the `id` token.

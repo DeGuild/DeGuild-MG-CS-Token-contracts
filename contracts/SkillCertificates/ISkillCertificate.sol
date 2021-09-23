@@ -23,6 +23,8 @@ interface ISkillCertificate {
      */
     function name() external view returns (string memory);
 
+    function typeAccepted() external view returns (uint256);
+
     /**
      * @dev Returns the shop symbol.
      */
@@ -39,18 +41,14 @@ interface ISkillCertificate {
      * @dev When there is a problem, cancel this item.
      */
     function forceBurn(uint256 id) external;
-    
 
     /**
      * @dev When user want to get a certificate, mint this item and burn a scroll.
      */
-    function mint(address to, uint256 scrollOwnedID) external;
+    function mint(address to, uint256 scrollOwnedID) external returns (bool);
 
     /**
      * @dev returns the validity of the certificate of student.
      */
-    function verify(address student)
-        external view
-        returns (bool);
-
+    function verify(address student) external view returns (bool);
 }

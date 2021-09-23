@@ -22,18 +22,21 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     address _addressShop;
     string _symbol;
     string _baseURIscroll;
+    uint256 _scrollType;
     Counters.Counter tracker = Counters.Counter(0);
-    
+
     constructor(
         string memory name_,
         string memory symbol_,
         string memory baseURI_,
-        address addressShop_
+        address addressShop_,
+        uint256 scrollType_
     ) {
         _name = name_;
         _symbol = symbol_;
         _baseURIscroll = baseURI_;
         _addressShop = addressShop_;
+        _scrollType = scrollType_;
     }
 
     /**
@@ -48,6 +51,13 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
      */
     function symbol() external view virtual override returns (string memory) {
         return _symbol;
+    }
+
+    /**
+     * @dev Returns the token collection name.
+     */
+    function typeAccepted() external view virtual override returns (uint256) {
+        return _scrollType;
     }
 
     /**
@@ -75,7 +85,13 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**
      * @dev See {IERC721-ownerOf}.
      */
-    function ownerOf(uint256 id) public view virtual override returns (address) {
+    function ownerOf(uint256 id)
+        public
+        view
+        virtual
+        override
+        returns (address)
+    {
         address owner = _owners[id];
         require(
             owner != address(0),
@@ -87,19 +103,31 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**
      * @dev When there is a problem, cancel this item.
      */
-    function forceBurn(uint256 id) external virtual override onlyOwner{
+    function forceBurn(uint256 id) external virtual override onlyOwner {
         _burn(id);
     }
 
     /**
      * @dev When user want to get a certificate, burn this item.
      */
-    function mint(address to, uint256 scrollOwnedID) external virtual override onlyOwner{
-        require(IMagicScrolls(_addressShop).burn(scrollOwnedID), "Cannot burn the scroll");
-        _mint(to);
+    function mint(address to, uint256 scrollOwnedID)
+        external
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
+        _mint(to, scrollOwnedID);
+        return true;
     }
 
-    function verify(address student) external view virtual override returns (bool){
+    function verify(address student)
+        external
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _certified[student];
     }
 
@@ -123,7 +151,16 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
         return _baseURIscroll;
     }
 
-    function _mint(address to) internal virtual onlyOwner {
+    function _mint(address to, uint256 scrollOwnedID)
+        internal
+        virtual
+        onlyOwner
+    {
+        require(
+            IMagicScrolls(_addressShop).burn(scrollOwnedID),
+            "Cannot burn the scroll!"
+        );
+
         _owners[tracker.current()] = to;
         emit CertificateMinted(tracker.current());
         tracker.increment();
@@ -131,7 +168,7 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     }
 
     function _burn(uint256 tokenId) internal virtual onlyOwner {
-        _certified[_owners[tokenId]] = false; 
+        _certified[_owners[tokenId]] = false;
         _owners[tokenId] = address(0);
     }
 }

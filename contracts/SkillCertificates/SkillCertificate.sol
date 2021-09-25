@@ -157,6 +157,10 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
         onlyOwner
     {
         require(
+            IMagicScrolls(_addressShop).ownerOf(scrollOwnedID) == to,
+            "Please burn the scroll owned by this address!"
+        );
+        require(
             IMagicScrolls(_addressShop).burn(scrollOwnedID),
             "Cannot burn the scroll!"
         );

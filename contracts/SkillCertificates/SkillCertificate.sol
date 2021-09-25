@@ -14,16 +14,16 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     using Strings for uint256;
     using Address for address;
 
-    mapping(uint256 => address) _owners;
-    mapping(address => bool) _certified;
+    mapping(uint256 => address) private _owners;
+    mapping(address => bool) private _certified;
 
-    address _addressDGC;
-    string _name;
-    address _addressShop;
-    string _symbol;
-    string _baseURIscroll;
-    uint256 _scrollType;
-    Counters.Counter tracker = Counters.Counter(0);
+    address private _addressDGC;
+    string private _name;
+    address private _addressShop;
+    string private _symbol;
+    string private _baseURIscroll;
+    uint256 private _scrollType;
+    Counters.Counter private tracker = Counters.Counter(0);
 
     constructor(
         string memory name_,
@@ -134,7 +134,7 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**
      * @dev Returns the token collection symbol.
      */
-    function shop() external view virtual override returns (address) {
+    function shop() public view virtual override returns (address) {
         return _addressShop;
     }
 

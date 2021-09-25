@@ -116,7 +116,7 @@ interface IMagicScrolls {
 
     function isCertificateManager(address manager) external view returns (bool);
 
-    function approveCertificateManager(address manager)
+    function setCertificateManager(address manager, bool status)
         external
         returns (bool);
 

@@ -9,7 +9,7 @@ contract CertificateManager is SkillCertificate {
             "Blockchain Lv.1",
             "BCM",
             "https://atlas-content1-cdn.pixelsquid.com/assets_v2/",
-            address(0xABfc5448A4F0544cBdA2686df2535ec11aEbD5DE),
+            address(0xe92fb62A09D32bF1b3E3b8F00Ac3CA11e891B0f1),
             0
         )
     {}

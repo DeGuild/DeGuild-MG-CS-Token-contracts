@@ -77,14 +77,14 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         return _certificateManagers[manager];
     }
 
-    function approveCertificateManager(address manager)
+    function setCertificateManager(address manager, bool status)
         external
         virtual
         override
         onlyOwner
         returns (bool)
     {
-        _certificateManagers[manager] = true;
+        _certificateManagers[manager] = status;
         return true;
     }
 
@@ -349,20 +349,8 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         override
         returns (bool)
     {
-        // check for validity to buy from interface for certificate
-        require(
-            isPurchasableScroll(scrollType),
-            "This scroll is not purchasable."
-        );
-        require(
-            _DGC.transferFrom(
-                _msgSender(),
-                owner(),
-                _scrollTypes[scrollType].price
-            ),
-            "Cannot transfer DGC, approve the contract or buy more DGC!"
-        );
-        return _buyScroll(scrollType);
+        _buyScroll(scrollType);
+        return true;
     }
 
     function addScroll(
@@ -449,14 +437,26 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         return _baseURIscroll;
     }
 
-    function _buyScroll(uint256 scrollType) internal virtual returns (bool) {
+    function _buyScroll(uint256 scrollType) internal virtual {
+        // check for validity to buy from interface for certificate
+        require(
+            isPurchasableScroll(scrollType),
+            "This scroll is not purchasable."
+        );
+        require(
+            _DGC.transferFrom(
+                _msgSender(),
+                owner(),
+                _scrollTypes[scrollType].price
+            ),
+            "Cannot transfer DGC, approve the contract or buy more DGC!"
+        );
         _scrollCreated[tracker.current()] = _scrollTypes[scrollType];
         _owners[tracker.current()] = _msgSender();
         _balances[scrollType][_msgSender()]++;
 
         emit ScrollBought(tracker.current(), scrollType);
         tracker.increment();
-        return true;
     }
 
     function _burn(uint256 id) internal virtual {

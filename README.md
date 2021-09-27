@@ -1,5 +1,10 @@
-# magic-shop-contracts
-The 1M$ contracts that handles all the important transaction
+# DeGuild-MG-CS-Token-contracts
+There are 3 main parts
+1. DeGuild contract
+2. Magic shop contract
+3. Certificate manager contract
+
+Together, these contracts support each other and be independent at the same time.
 
 # Instructions and CLI
 
@@ -19,6 +24,12 @@ Our setup API and testing network
             apiKey: ETHERSCAN_API_KEY,
         },
         };
+
+Our .env file setup
+        
+        RINKEBY_PRIVATE_KEY=6
+        ALCHEMY_API_KEY=X
+        ETHERSCAN_API_KEY=W
 
 To compile the code and retrieve the bytecodes and ABIs
 

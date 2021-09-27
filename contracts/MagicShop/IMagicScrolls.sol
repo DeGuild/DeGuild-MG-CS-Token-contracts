@@ -7,6 +7,7 @@ pragma solidity ^0.8.0;
  * As the first version, here are the list of functions, events, and structs we used.
  */
 interface IMagicScrolls {
+    
     /**
      * @dev This data type is used to store the data of a magic scroll.
      * scrollID         (uint256) is the unique type of that scroll.

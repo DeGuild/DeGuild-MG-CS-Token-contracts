@@ -24,8 +24,15 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
      * so we keep track of those scrolls here.
      */
     mapping(uint256 => address) private _owners;
+
+    /**
+     * @dev This mapping store all scrolls.
+     */
     mapping(uint256 => MagicScroll) private _scrollCreated;
 
+    /**
+     * @dev This mapping store just scroll types.
+     */
     mapping(uint256 => MagicScroll) private _scrollTypes;
 
     /**
@@ -34,27 +41,41 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
      */
     mapping(uint256 => mapping(address => uint256)) private _balances;
 
+    /**
+     * @dev This mapping handles permission to use burn().
+     */
     mapping(address => bool) private _certificateManagers;
 
-    address private _addressDGC;
+    /**
+     * @dev Store the address of Deguild Token
+     */
+    address private _addressDGT;
     string private _name;
     string private _symbol;
     string private _baseURIscroll;
+
+    /**
+     * @dev Store the ID of scrolls and types
+     */
     Counters.Counter private tracker = Counters.Counter(0);
     Counters.Counter private variations = Counters.Counter(0);
-    IERC20 private _DGC;
+
+    /**
+     * @dev Store the interface of Deguild Token
+     */
+    IERC20 private _DGT;
 
     constructor(
         string memory name_,
         string memory symbol_,
         string memory baseURI_,
-        address addressDGC_
+        address addressDGT_
     ) {
         _name = name_;
         _symbol = symbol_;
-        _addressDGC = addressDGC_;
+        _addressDGT = addressDGT_;
         _baseURIscroll = baseURI_;
-        _DGC = IERC20(addressDGC_);
+        _DGT = IERC20(addressDGT_);
     }
 
     /**
@@ -110,7 +131,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
      * @dev See {IMagicScrolls-deguildCoin}.
      */
     function deguildCoin() external view virtual override returns (address) {
-        return _addressDGC;
+        return _addressDGT;
     }
 
     /**
@@ -530,7 +551,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
             "This scroll is not purchasable."
         );
         require(
-            _DGC.transferFrom(
+            _DGT.transferFrom(
                 _msgSender(),
                 owner(),
                 _scrollTypes[scrollType].price

@@ -289,6 +289,7 @@ interface IMagicScrolls {
      * @dev When owner want to seal a scroll, it will check for existence and seal them forever (not mintable anymore and cannot be used later on).
      *
      * Requirements:
+     *
      * - `scroll` type must exist.
      * - The caller must be the owner of the shop.
      */

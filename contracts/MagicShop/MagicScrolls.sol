@@ -18,16 +18,6 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     using Strings for uint256;
     using Address for address;
 
-    struct MagicScroll {
-        uint256 scrollID;
-        uint256 price;
-        address prerequisite; //certification required, check for existence and validity
-        uint8 state;
-        bool lessonIncluded;
-        bool hasPrerequisite;
-        bool available;
-    }
-
     /**
      * @dev Classic ERC721 mapping, tracking down the scrolls existed
      * We need to know exactly what happened to the scroll
@@ -67,29 +57,86 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         _DGC = IERC20(addressDGC_);
     }
 
-    function isCertificateManager(address manager)
+    /**
+     * @dev See {IMagicScrolls-name}.
+     */
+    function name() external view virtual override returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-symbol}.
+     */
+    function symbol() external view virtual override returns (string memory) {
+        return _symbol;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId)
         public
         view
         virtual
         override
-        returns (bool)
+        returns (string memory)
     {
-        return _certificateManagers[manager];
-    }
+        require(
+            _exists(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
 
-    function setCertificateManager(address manager, bool status)
-        external
-        virtual
-        override
-        onlyOwner
-        returns (bool)
-    {
-        _certificateManagers[manager] = status;
-        return true;
+        string memory baseURI = _baseURI();
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, tokenId.toString()))
+                : "";
     }
 
     /**
-     * @dev See {IERC1155-balanceOf}.
+     * @dev See {IMagicScrolls-numberOfScrollTypes}.
+     */
+    function numberOfScrollTypes()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        return variations.current();
+    }
+
+    /**
+     * @dev See {IMagicScrolls-deguildCoin}.
+     */
+    function deguildCoin() external view virtual override returns (address) {
+        return _addressDGC;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-ownerOf}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     */
+    function ownerOf(uint256 id)
+        public
+        view
+        virtual
+        override
+        returns (address)
+    {
+        address owner = _owners[id];
+        require(
+            owner != address(0),
+            "ERC721: owner query for nonexistent token"
+        );
+        return owner;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-balanceOfOne}.
      *
      * Requirements:
      *
@@ -110,25 +157,34 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     /**
-     * @dev See {IERC721-ownerOf}.
+     * @dev See {IMagicScrolls-balanceOfAll}.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
      */
-    function ownerOf(uint256 id)
+    function balanceOfAll(address account)
         public
         view
         virtual
         override
-        returns (address)
+        returns (uint256[] memory)
     {
-        address owner = _owners[id];
-        require(
-            owner != address(0),
-            "ERC721: owner query for nonexistent token"
-        );
-        return owner;
+        uint256[] memory batchBalances = new uint256[](variations.current());
+
+        for (uint256 i = 0; i < variations.current(); ++i) {
+            batchBalances[i] = balanceOfOne(account, i);
+        }
+
+        return batchBalances;
     }
 
     /**
-     * @dev Telling what this address own
+     * @dev See {IMagicScrolls-balanceUserOwned}.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
      */
     function balanceUserOwned(address account)
         public
@@ -156,180 +212,26 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     /**
-     * @dev Check every type of scroll in one account
-     *
+     * @dev See {IMagicScrolls-isCertificateManager}.
      */
-    function balanceOfAll(address account)
+    function isCertificateManager(address manager)
         public
         view
         virtual
         override
-        returns (uint256[] memory)
+        returns (bool)
     {
-        uint256[] memory batchBalances = new uint256[](variations.current());
-
-        for (uint256 i = 0; i < variations.current(); ++i) {
-            batchBalances[i] = balanceOfOne(account, i);
-        }
-
-        return batchBalances;
+        return _certificateManagers[manager];
     }
 
     /**
-     * @dev Check every type of scroll in one account, check the struct to decode it properly
-     *
+     * @dev See {IMagicScrolls-isPurchasableScroll}.
      */
-    function scrollTypes() public view virtual returns (MagicScroll[] memory) {
-        MagicScroll[] memory batchBalances = new MagicScroll[](
-            variations.current()
-        );
-
-        for (uint256 i = 0; i < variations.current(); ++i) {
-            batchBalances[i] = _scrollTypes[i];
-        }
-        return batchBalances;
-    }
-
-    /**
-     * @dev Check every type of scroll in one account
-     *
-     */
-    function scrollTypeInfo(uint256 typeId)
-        public
-        view
-        virtual
-        override
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            address,
-            bool,
-            bool,
-            bool
-        )
-    {
-        require(_existsType(typeId), "This scroll type does not exist");
-        MagicScroll memory scroll = _scrollTypes[typeId];
-        return (
-            typeId,
-            scroll.scrollID,
-            scroll.price,
-            scroll.prerequisite,
-            scroll.lessonIncluded,
-            scroll.hasPrerequisite,
-            scroll.available
-        );
-    }
-
-    /**
-     * @dev Check every type of scroll in one account
-     *
-     */
-    function scrollInfo(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            address,
-            bool,
-            bool,
-            bool
-        )
-    {
-        require(_exists(tokenId), "This scroll does not exist");
-        MagicScroll memory scroll = _scrollCreated[tokenId];
-        return (
-            tokenId,
-            scroll.scrollID,
-            scroll.price,
-            scroll.prerequisite,
-            scroll.lessonIncluded,
-            scroll.hasPrerequisite,
-            scroll.available
-        );
-    }
-
-    /**
-     * @dev Returns the token collection name.
-     */
-    function name() external view virtual override returns (string memory) {
-        return _name;
-    }
-
-    /**
-     * @dev Returns the acceptable token name.
-     */
-    function deguildCoin() external view virtual override returns (address) {
-        return _addressDGC;
-    }
-
-    /**
-     * @dev Returns the token collection name.
-     */
-    function numberOfScrollTypes()
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        return variations.current();
-    }
-
-    /**
-     * @dev Returns the token collection symbol.
-     */
-    function symbol() external view virtual override returns (string memory) {
-        return _symbol;
-    }
-
-    /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
-     */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
-        require(
-            _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
-
-        string memory baseURI = _baseURI();
-        return
-            bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString()))
-                : "";
-    }
-
-    function forceCancel(uint256 id) external virtual override returns (bool) {
-        _forceCancel(id);
-        return true;
-    }
-
-    function consume(uint256 id) external virtual override returns (bool) {
-        _consume(id);
-        return true;
-    }
-
-    function burn(uint256 id) external virtual override returns (bool) {
-        _burn(id);
-        return true;
-    }
-
-    //This function suppose to be a view function
     function isPurchasableScroll(uint256 scrollType)
         public
         view
         virtual
+        override
         returns (bool)
     {
         require(_existsType(scrollType), "Scroll does not exist.");
@@ -343,6 +245,151 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         return true;
     }
 
+    /**
+     * @dev See {IMagicScrolls-scrollTypes}.
+     */
+    function scrollTypes()
+        public
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {
+        uint256[] memory types;
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < variations.current(); i++) {
+            if (_scrollTypes[i].available) {
+                count++;
+            }
+        }
+
+        types = new uint256[](count);
+        for (uint256 i = 0; i < variations.current(); i++) {
+            if (_scrollTypes[i].available) {
+                types[--count] = i;
+            }
+        }
+        return types;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-scrollTypeInfo}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     */
+    function scrollTypeInfo(uint256 typeId)
+        public
+        view
+        virtual
+        override
+        returns (
+            uint256,
+            uint256,
+            address,
+            bool,
+            bool,
+            bool
+        )
+    {
+        require(_existsType(typeId), "This scroll type does not exist");
+        MagicScroll memory scroll = _scrollTypes[typeId];
+        return (
+            typeId,
+            scroll.price,
+            scroll.prerequisite,
+            scroll.lessonIncluded,
+            scroll.hasPrerequisite,
+            scroll.available
+        );
+    }
+
+    /**
+     * @dev See {IMagicScrolls-scrollInfo}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     */
+    function scrollInfo(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            address,
+            bool,
+            bool
+        )
+    {
+        require(_exists(tokenId), "This scroll does not exist");
+        MagicScroll memory scroll = _scrollCreated[tokenId];
+        return (
+            tokenId,
+            scroll.scrollID,
+            scroll.price,
+            scroll.prerequisite,
+            scroll.lessonIncluded,
+            scroll.hasPrerequisite
+        );
+    }
+
+    /**
+     * @dev See {IMagicScrolls-forceCancel}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - The caller must be the owner of the shop.
+     */
+    function forceCancel(uint256 id) external virtual override returns (bool) {
+        _forceCancel(id);
+        return true;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-consume}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - If the caller is not a certificate manager, then we reject the call.
+     * - If the certificate manager do not accept this type of scroll, we also reject this call.
+     * - If the scroll is not fresh, reject it.
+     */
+    function consume(uint256 id) external virtual override returns (bool) {
+        _consume(id);
+        return true;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-burn}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - If the caller is not a certificate manager, then we reject the call.
+     * - If the certificate manager do not accept this type of scroll, we also reject this call.
+     * - If the scroll is not fresh, reject it.
+     */
+    function burn(uint256 id) external virtual override returns (bool) {
+        _burn(id);
+        return true;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-buyScroll}.
+     *
+     * Requirements:
+     *
+     * - `scroll` type must be purchasable.
+     * - The caller must be able to transfer DGT properly and succesfully.
+     */
     function buyScroll(uint256 scrollType)
         external
         virtual
@@ -353,6 +400,14 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         return true;
     }
 
+    /**
+     * @dev See {IMagicScrolls-addScroll}.
+     *
+     * Requirements:
+     *
+     * - `scroll` type must be purchasable.
+     * - The caller must be the owner of the shop.
+     */
     function addScroll(
         address prerequisite,
         bool lessonIncluded,
@@ -363,6 +418,33 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         return true;
     }
 
+    /**
+     * @dev See {IMagicScrolls-setCertificateManager}.
+     *
+     * Requirements:
+     *
+     * - The caller must be the owner of the shop.
+     */
+    function setCertificateManager(address manager, bool status)
+        external
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
+        _certificateManagers[manager] = status;
+        emit ApprovalForCM(manager, status);
+        return true;
+    }
+
+    /**
+     * @dev See {IMagicScrolls-sealScroll}.
+     *
+     * Requirements:
+     *
+     * - `scroll` type must exist.
+     * - The caller must be the owner of the shop.
+     */
     function sealScroll(uint256 scrollType)
         external
         virtual
@@ -425,7 +507,11 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     function _existsType(uint256 tokenId) internal view virtual returns (bool) {
-        return variations.current() > tokenId;
+        require(
+            variations.current() > tokenId,
+            "There are not that many types of scroll"
+        );
+        return _scrollTypes[tokenId].available;
     }
 
     /**
@@ -488,11 +574,16 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     }
 
     function _consume(uint256 id) internal virtual {
-        require(_exists(id), "Nonexistent token");
+        uint256 scrollType = _scrollCreated[id].scrollID;
 
+        require(_exists(id), "Nonexistent token");
         require(
-            _msgSender() == _owners[id],
-            "You are not the owner of this item"
+            isCertificateManager(_msgSender()),
+            "You are not the certificate manager, consuming is reserved for the claiming exam key only."
+        );
+        require(
+            ISkillCertificate(_msgSender()).typeAccepted() == scrollType,
+            "Wrong type of scroll to be consumed."
         );
         require(
             _scrollCreated[id].state == 1,

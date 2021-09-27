@@ -10,20 +10,39 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SkillCertificate is Context, Ownable, ISkillCertificate {
+    /**
+     * Libraries required, please use these!
+     */
     using Counters for Counters.Counter;
     using Strings for uint256;
     using Address for address;
 
-    mapping(uint256 => address) _owners;
-    mapping(address => bool) _certified;
+    /**
+     * @dev Classic ERC721 mapping, tracking down the certificate existed
+     * We need to know exactly what happened to the certificate
+     * so we keep track of those certificates here.
+     */
+    mapping(uint256 => address) private _owners;
+    mapping(address => bool) private _certified;
 
-    address _addressDGC;
-    string _name;
-    address _addressShop;
-    string _symbol;
-    string _baseURIscroll;
-    uint256 _scrollType;
-    Counters.Counter tracker = Counters.Counter(0);
+    /**
+     * @dev Store the addresses of the shop.
+     */
+    address private _addressShop;
+
+    string private _name;
+    string private _symbol;
+    string private _baseURIscroll;
+
+    /**
+     * @dev Store the type that this certificate manager accept.
+     */
+    uint256 private _scrollType;
+
+    /**
+     * @dev Store the ID of certificates
+     */
+    Counters.Counter private tracker = Counters.Counter(0);
 
     constructor(
         string memory name_,
@@ -40,28 +59,39 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     }
 
     /**
-     * @dev Returns the token collection name.
+     * @dev See {ISkillCertificate-name}.
      */
     function name() external view virtual override returns (string memory) {
         return _name;
     }
 
     /**
-     * @dev Returns the token collection symbol.
+     * @dev See {ISkillCertificate-symbol}.
      */
     function symbol() external view virtual override returns (string memory) {
         return _symbol;
     }
 
     /**
-     * @dev Returns the token collection name.
+     * @dev See {ISkillCertificate-shop}.
+     */
+    function shop() public view virtual override returns (address) {
+        return _addressShop;
+    }
+
+    /**
+     * @dev See {ISkillCertificate-typeAccepted}.
      */
     function typeAccepted() external view virtual override returns (uint256) {
         return _scrollType;
     }
 
     /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     * @dev See {ISkillCertificate-tokenURI}.
+     *
+     * Requirements:
+     *
+     * - `tokenId` cannot be non-existence token.
      */
     function tokenURI(uint256 tokenId)
         public
@@ -83,7 +113,11 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     }
 
     /**
-     * @dev See {IERC721-ownerOf}.
+     * @dev See {ISkillCertificate-ownerOf}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
      */
     function ownerOf(uint256 id)
         public
@@ -101,26 +135,13 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     }
 
     /**
-     * @dev When there is a problem, cancel this item.
+     * @dev See {ISkillCertificate-verify}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - The caller must be the owner of the shop.
      */
-    function forceBurn(uint256 id) external virtual override onlyOwner {
-        _burn(id);
-    }
-
-    /**
-     * @dev When user want to get a certificate, burn this item.
-     */
-    function mint(address to, uint256 scrollOwnedID)
-        external
-        virtual
-        override
-        onlyOwner
-        returns (bool)
-    {
-        _mint(to, scrollOwnedID);
-        return true;
-    }
-
     function verify(address student)
         external
         view
@@ -132,10 +153,41 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
     }
 
     /**
-     * @dev Returns the token collection symbol.
+     * @dev See {ISkillCertificate-forceBurn}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - The caller must be the owner of the shop.
      */
-    function shop() external view virtual override returns (address) {
-        return _addressShop;
+    function forceBurn(uint256 id)
+        external
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
+        _burn(id);
+        return true;
+    }
+
+    /**
+     * @dev See {ISkillCertificate-mint}.
+     *
+     * Requirements:
+     *
+     * - `to` must the owner of `scrollOwnedID`.
+     * - `scrollOwnedID` must be burned.
+     */
+    function mint(address to, uint256 scrollOwnedID)
+        external
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
+        _mint(to, scrollOwnedID);
+        return true;
     }
 
     function _exists(uint256 tokenId) internal view virtual returns (bool) {
@@ -157,17 +209,23 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
         onlyOwner
     {
         require(
+            IMagicScrolls(_addressShop).ownerOf(scrollOwnedID) == to,
+            "Please burn the scroll owned by this address!"
+        );
+        require(
             IMagicScrolls(_addressShop).burn(scrollOwnedID),
             "Cannot burn the scroll!"
         );
 
         _owners[tracker.current()] = to;
-        emit CertificateMinted(tracker.current());
+        emit CertificateMinted(to, tracker.current());
         tracker.increment();
         _certified[to] = true;
     }
 
     function _burn(uint256 tokenId) internal virtual onlyOwner {
+        require(_exists(tokenId), "Nonexistent token");
+        emit CertificateBurned(_owners[tokenId], tokenId);
         _certified[_owners[tokenId]] = false;
         _owners[tokenId] = address(0);
     }

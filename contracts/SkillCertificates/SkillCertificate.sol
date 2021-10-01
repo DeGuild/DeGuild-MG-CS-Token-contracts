@@ -93,22 +93,17 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
      *
      * - `tokenId` cannot be non-existence token.
      */
-    function tokenURI(uint256 tokenId)
+    function tokenURI()
         public
         view
         virtual
         override
         returns (string memory)
     {
-        require(
-            _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
-
         string memory baseURI = _baseURI();
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString()))
+                ? string(abi.encodePacked(baseURI, address(this)))
                 : "";
     }
 

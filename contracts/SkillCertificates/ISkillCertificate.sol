@@ -38,12 +38,8 @@ interface ISkillCertificate {
 
     /**
      * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
-     *
-     * Requirements:
-     *
-     * - `tokenId` cannot be non-existence token.
      */
-    function tokenURI(uint256 tokenId) external view returns (string memory);
+    function tokenURI() external view returns (string memory);
 
     /**
      * @dev Returns the owner of the `id` token.

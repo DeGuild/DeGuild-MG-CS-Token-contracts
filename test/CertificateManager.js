@@ -3,7 +3,7 @@ const { expect } = require("chai");
 describe("Certificate Manager Contract", function () {
   
   before(async function () {
-    this.Certificate = await ethers.getContractFactory("CertificateManager")
+    this.Certificate = await ethers.getContractFactory("CertificateManager1")
     this.signers = await ethers.getSigners()
   })
 

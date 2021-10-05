@@ -103,7 +103,7 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
         string memory baseURI = _baseURI();
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, address(this)))
+                ? string(abi.encodePacked(baseURI, abi.encodePacked(address(this))))
                 : "";
     }
 

@@ -93,17 +93,13 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
      *
      * - `tokenId` cannot be non-existence token.
      */
-    function tokenURI()
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
+    function tokenURI() public view virtual override returns (string memory) {
         string memory baseURI = _baseURI();
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, address(this)))
+                ? string(
+                    abi.encodePacked(baseURI, _toAsciiString(address(this)))
+                )
                 : "";
     }
 
@@ -223,5 +219,22 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
         emit CertificateBurned(_owners[tokenId], tokenId);
         _certified[_owners[tokenId]] = false;
         _owners[tokenId] = address(0);
+    }
+
+    function _toAsciiString(address x) internal pure returns (string memory) {
+        bytes memory s = new bytes(40);
+        for (uint256 i = 0; i < 20; i++) {
+            bytes1 b = bytes1(uint8(uint256(uint160(x)) / (2**(8 * (19 - i)))));
+            bytes1 hi = bytes1(uint8(b) / 16);
+            bytes1 lo = bytes1(uint8(b) - 16 * uint8(hi));
+            s[2 * i] = _char(hi);
+            s[2 * i + 1] = _char(lo);
+        }
+        return string(abi.encodePacked("0x", string(s)));
+    }
+
+    function _char(bytes1 b) internal pure returns (bytes1 c) {
+        if (uint8(b) < 10) return bytes1(uint8(b) + 0x30);
+        else return bytes1(uint8(b) + 0x57);
     }
 }

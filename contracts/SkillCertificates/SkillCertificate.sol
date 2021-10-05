@@ -230,7 +230,7 @@ contract SkillCertificate is Context, Ownable, ISkillCertificate {
             s[2 * i] = _char(hi);
             s[2 * i + 1] = _char(lo);
         }
-        return string(s);
+        return string(abi.encodePacked("0x", string(s)));
     }
 
     function _char(bytes1 b) internal pure returns (bytes1 c) {

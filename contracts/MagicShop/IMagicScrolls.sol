@@ -7,7 +7,6 @@ pragma solidity ^0.8.0;
  * As the first version, here are the list of functions, events, and structs we used.
  */
 interface IMagicScrolls {
-    
     /**
      * @dev This data type is used to store the data of a magic scroll.
      * scrollID         (uint256) is the unique type of that scroll.
@@ -74,6 +73,18 @@ interface IMagicScrolls {
      * - `tokenId` cannot be non-existence token.
      */
     function tokenURI(uint256 tokenId) external view returns (string memory);
+
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token type.
+     *
+     * Requirements:
+     *
+     * - `tokenId` cannot be non-existence token.
+     */
+    function tokenTypeURI(uint256 tokenId)
+        external
+        view
+        returns (string memory);
 
     /**
      * @dev Returns the number of scroll types available to be bought

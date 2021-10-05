@@ -108,6 +108,30 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         );
 
         string memory baseURI = _baseURI();
+        uint256 tokenType = _scrollCreated[tokenId].scrollID;
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, tokenType.toString()))
+                : "";
+    }
+
+    /**
+     * @dev See {IMagicScrolls-tokenURI}.
+     */
+    function tokenTypeURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        require(
+            _existsType(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
+
+        string memory baseURI = _baseURI();
+
         return
             bytes(baseURI).length > 0
                 ? string(abi.encodePacked(baseURI, tokenId.toString()))

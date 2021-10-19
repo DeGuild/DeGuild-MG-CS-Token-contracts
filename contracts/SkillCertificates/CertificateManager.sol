@@ -6,11 +6,11 @@ import "./SkillCertificate.sol";
 contract CertificateManager is SkillCertificate {
     constructor()
         SkillCertificate(
-            "Computer Architecture",
-            "ICCS324",
+            "Introduction to Computer Programming",
+            "ICCS101",
             "https://us-central1-deguild-2021.cloudfunctions.net/app/readCertificate/",
-            address(0x09eE5D4916b0c937540F2A5a7fB2621564628Fbf),
-            16
+            address(0x1B362371f11cAA26B1A993f7Ffd711c0B9966f70),
+            1
         )
     {}
 }

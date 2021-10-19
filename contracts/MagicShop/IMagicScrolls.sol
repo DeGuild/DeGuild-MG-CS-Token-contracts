@@ -148,10 +148,10 @@ interface IMagicScrolls {
     function isCertificateManager(address manager) external view returns (bool);
 
     /**
-     * @dev Returns true if `scrollType` is purchasable.
+     * @dev Returns true if `scrollType` is purchasable for `buyer`.
      *      Each scroll has its own conditions to purchase.
      */
-    function isPurchasableScroll(uint256 scrollType)
+    function isPurchasableScroll(uint256 scrollType, address buyer)
         external
         view
         returns (bool);

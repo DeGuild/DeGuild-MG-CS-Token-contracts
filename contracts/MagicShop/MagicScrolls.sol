@@ -130,7 +130,12 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
 
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(abi.encodePacked(baseURI, _getChecksum(address(this))), abi.encodePacked("/", tokenId.toString())))
+                ? string(
+                    abi.encodePacked(
+                        abi.encodePacked(baseURI, _getChecksum(address(this))),
+                        abi.encodePacked("/", tokenId.toString())
+                    )
+                )
                 : "";
     }
 
@@ -268,7 +273,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     /**
      * @dev See {IMagicScrolls-isPurchasableScroll}.
      */
-    function isPurchasableScroll(uint256 scrollType)
+    function isPurchasableScroll(uint256 scrollType, address buyer)
         public
         view
         virtual
@@ -276,14 +281,18 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         returns (bool)
     {
         require(_existsType(scrollType), "Scroll does not exist.");
-        if (!_scrollTypes[scrollType].hasPrerequisite) return true;
         require(
-            ISkillCertificate(_scrollTypes[scrollType].prerequisite).verify(
-                _msgSender()
-            ) && _scrollTypes[scrollType].available,
-            "You are not verified or this scroll type is no longer purchasable."
+            _scrollTypes[scrollType].available,
+            "This scroll type is no longer purchasable"
         );
-        return true;
+        if (!_scrollTypes[scrollType].hasPrerequisite) {
+            return true;
+        } else {
+            return
+                ISkillCertificate(_scrollTypes[scrollType].prerequisite).verify(
+                    buyer
+                );
+        }
     }
 
     /**
@@ -567,7 +576,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
     function _buyScroll(uint256 scrollType) internal virtual {
         // check for validity to buy from interface for certificate
         require(
-            isPurchasableScroll(scrollType),
+            isPurchasableScroll(scrollType, _msgSender()),
             "This scroll is not purchasable."
         );
         require(
@@ -645,7 +654,7 @@ contract MagicScrolls is Context, Ownable, IMagicScrolls {
         returns (string memory accountChecksum)
     {
         // call internal function for converting an account to a checksummed string.
-        return string(abi.encodePacked("0x",_toChecksumString(account)));
+        return string(abi.encodePacked("0x", _toChecksumString(account)));
     }
 
     /*

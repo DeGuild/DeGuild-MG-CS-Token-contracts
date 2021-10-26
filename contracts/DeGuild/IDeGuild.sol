@@ -15,6 +15,7 @@ interface IDeGuild {
      * skills           (address[])  is the address of the certificate manager (any address is fine, if it has no prerequisite).
      * state            (uint8)      is the state of the scroll (Consumed or cancelled or fresh).
      * deadline         (uint256)    is the state telling that this scroll can be used for unlocking learning materials off-chain.
+     * level         (uint256)    is the state telling that this scroll can be used for unlocking learning materials off-chain.
      * state            (uint8)      is the state telling that this scroll requires a certificate from the certificate manager given.
      * difficulty       (uint8)      is the state telling that this scroll is no longer purchasable
      *                            (only used to check the availability to mint various magic scroll types)
@@ -25,6 +26,7 @@ interface IDeGuild {
         address taker;
         address[] skills;
         uint256 deadline;
+        uint256 level;
         uint8 state;
         uint8 difficulty;
     }
@@ -70,7 +72,7 @@ interface IDeGuild {
      *
      * - `id` must exist.
      */
-    function ownersOf(uint256 id) external view returns (address);
+    function ownersOf(uint256 id) external view returns (address[] memory);
 
     /**
      * @dev Returns the current job that `account` owned
@@ -82,7 +84,7 @@ interface IDeGuild {
     function jobOf(address account)
         external
         view
-        returns (uint256[] memory);
+        returns (uint256);
 
     /**
      * @dev Returns the jobs that `account` completed.
@@ -190,11 +192,14 @@ interface IDeGuild {
      * - `scroll` type must be purchasable.
      * - The caller must be the owner of the shop.
      */
-    function addScroll(
+    function addJob(
         uint256 reward,
         address client,
         address taker,
         address[] memory skills,
         uint256 deadline
     ) external returns (bool);
+
+    function appraise() external returns (bool);
+
 }

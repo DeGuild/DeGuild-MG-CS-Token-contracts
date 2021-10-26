@@ -180,6 +180,8 @@ interface IDeGuild {
      * - If the scroll is not fresh, reject it.
      */
     function complete(uint256 id) external returns (bool);
+    
+    function report(uint256 id) external returns (bool);
 
     /**
      * @dev Mint a type scroll.
@@ -197,9 +199,10 @@ interface IDeGuild {
         address client,
         address taker,
         address[] memory skills,
-        uint256 deadline
+        uint256 deadline,
+        uint8 difficulty
     ) external returns (bool);
 
-    function appraise() external returns (bool);
+    function appraise(address user) external returns (bool);
 
 }

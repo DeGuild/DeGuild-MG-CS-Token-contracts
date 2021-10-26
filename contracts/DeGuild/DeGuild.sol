@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "contracts/DeGuild/IDeGuild.sol";
+import "../SkillCertificates/ISkillCertificate.sol";
 import "../Utils/EIP-55.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -28,8 +29,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
      * so we keep track of those scrolls here.
      */
     mapping(uint256 => address) private _owners;
+    mapping(address => uint256) private _currentJob;
+    mapping(address => uint256) private _levels;
 
-    mapping(address => uint256) private _jobsDone;
+    mapping(address => uint256[]) private _jobsDone;
     mapping(address => bool) private _appraisers;
     EnumerableSet.AddressSet private _skillList;
 
@@ -132,32 +135,40 @@ contract DeGuild is Context, Ownable, IDeGuild {
      *
      * - `id` must exist.
      */
-    function ownersOf(uint256 id)
+    function ownersOf(uint256 jobId)
         public
         view
         virtual
         override
         returns (address[] memory)
     {
-        
-        require(
-            _exists(id),
-            "ERC721: owner query for nonexistent token"
-        );
+        require(_exists(jobId), "ERC721: owner query for nonexistent token");
 
         address[] memory owners = new address[](2);
 
-        owners[0] = _owners[id];
-        owners[1] = _JobsCreated[id].taker;
+        owners[0] = _owners[jobId];
+        owners[1] = _JobsCreated[jobId].taker;
         // return [owner];
         return owners;
     }
 
     function isQualified(uint256 jobId, address taker)
-        external
+        public
         view
         returns (bool)
     {
+        require(_exists(jobId), "ERC721: owner query for nonexistent token");
+
+        address[] memory skills = _skillList.values();
+
+        for (uint256 index = 0; index < _skillList.length(); index++) {
+            address skill = skills[index];
+            bool confirm = ISkillCertificate(skill).verify(taker);
+            if (!confirm) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -187,7 +198,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
     }
 
     function jobOf(address account) public view returns (uint256) {
-        return 0;
+        require(account != address(0), "Querying on non-exist account");
+        return _currentJob[account];
     }
 
     function jobsCompleted(address account)
@@ -195,19 +207,74 @@ contract DeGuild is Context, Ownable, IDeGuild {
         view
         returns (uint256[] memory)
     {
-        uint256[] memory a = new uint256[](4);
-        return a;
+        return _jobsDone[account];
     }
 
-    function forceCancel(uint256 id) public returns (bool) {
+    function forceCancel(uint256 id) public onlyOwner returns (bool) {
+        require(_exists(id), "Nonexistent token");
+        require(
+            _DGT.transfer(_owners[id], _JobsCreated[id].reward),
+            "Not enough fund"
+        );
+
+        _JobsCreated[id].state = 99;
+        emit StateChanged(id, 99);
         return true;
     }
 
     function take(uint256 id) public returns (bool) {
+        require(_exists(id), "Nonexistent token");
+        require(isQualified(id, _msgSender()), "Nonexistent token");
+        _JobsCreated[id].state = 2;
+        _JobsCreated[id].taker = _msgSender();
+
+        emit StateChanged(id, 2);
+
         return true;
     }
 
     function complete(uint256 id) public returns (bool) {
+        require(_exists(id), "Nonexistent token");
+        require(
+            _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
+            "Not enough fund"
+        );
+
+        _JobsCreated[id].state = 3;
+        _owners[id] = _JobsCreated[id].taker;
+        emit StateChanged(id, 3);
+
+        return true;
+    }
+
+    function report(uint256 id) public returns (bool) {
+        require(_exists(id), "Nonexistent token");
+        uint256 fee = _JobsCreated[id].reward / 10;
+        require(_DGT.transfer(owner(), fee), "Not enough fund");
+
+        _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
+        _JobsCreated[id].state = 99;
+        _owners[id] = owner();
+        emit StateChanged(id, 99);
+
+        return true;
+    }
+
+    function judge(uint256 id, uint8 decision) public returns (bool) {
+        require(_exists(id), "Nonexistent token");
+
+        address winner;
+        if (decision > 0) {
+            winner = _JobsCreated[id].client;
+        } else {
+            winner = _JobsCreated[id].taker;
+        }
+
+        require(
+            _DGT.transfer(winner, _JobsCreated[id].reward),
+            "Not enough fund"
+        );
+
         return true;
     }
 
@@ -216,12 +283,53 @@ contract DeGuild is Context, Ownable, IDeGuild {
         address client,
         address taker,
         address[] memory skills,
-        uint256 deadline
+        uint256 deadline,
+        uint8 difficulty
     ) public returns (bool) {
+        uint256 level = 0;
+
+        if (difficulty == 5) {
+            level = 100;
+            reward += 1000;
+        } else if (difficulty == 4) {
+            level = 75;
+            reward += 1000;
+        } else if (difficulty == 3) {
+            level = 50;
+        } else if (difficulty == 2) {
+            level = 25;
+        } else {
+            level = 0;
+        }
+
+        _JobsCreated[tracker.current()] = Job({
+            reward: reward,
+            client: client,
+            taker: taker,
+            state: 1,
+            skills: skills,
+            deadline: deadline,
+            level: level,
+            difficulty: difficulty
+        });
+        tracker.increment();
+
         return true;
     }
 
-    function appraise() public returns (bool) {
+    function appraise(address user) public returns (bool) {
+        address[] memory skills = _skillList.values();
+        uint256 level = 0;
+
+        for (uint256 index = 0; index < _skillList.length(); index++) {
+            address skill = skills[index];
+            bool confirm = ISkillCertificate(skill).verify(user);
+            if (confirm) {
+                level+=1;
+            }
+        }
+
+        _levels[user] = level + _jobsDone[user].length;
         return true;
     }
 

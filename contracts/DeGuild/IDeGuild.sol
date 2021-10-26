@@ -50,13 +50,13 @@ interface IDeGuild {
     function symbol() external view returns (string memory);
 
     /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     * @dev Returns the Uniform Resource Identifier (URI) for `jobId` token.
      *
      * Requirements:
      *
-     * - `tokenId` cannot be non-existence token.
+     * - `jobId` cannot be non-existence token.
      */
-    function jobURI(uint256 tokenId) external view returns (string memory);
+    function jobURI(uint256 jobId) external view returns (string memory);
 
     /**
      * @dev Returns the acceptable token address.

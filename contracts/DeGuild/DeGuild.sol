@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // starting in October.
 contract DeGuild is Context, Ownable, IDeGuild {
@@ -19,6 +20,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
     using Strings for uint256;
     using Address for address;
     using ChecksumLib for address;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
      * @dev Classic ERC721 mapping, tracking down the scrolls existed
@@ -27,7 +29,9 @@ contract DeGuild is Context, Ownable, IDeGuild {
      */
     mapping(uint256 => address) private _owners;
 
-    mapping(address => uint256) private _level;
+    mapping(address => uint256) private _jobsDone;
+    mapping(address => bool) private _appraisers;
+    EnumerableSet.AddressSet private _skillList;
 
     /**
      * @dev This mapping store all scrolls.
@@ -135,14 +139,16 @@ contract DeGuild is Context, Ownable, IDeGuild {
         override
         returns (address[] memory)
     {
-        address[] memory owners = new address[](2);
-        // owners[0] = _owners[id];
-        // owners[0] = _owners[id];
+        
+        require(
+            _exists(id),
+            "ERC721: owner query for nonexistent token"
+        );
 
-        // require(
-        //     owner != address(0),
-        //     "ERC721: owner query for nonexistent token"
-        // );
+        address[] memory owners = new address[](2);
+
+        owners[0] = _owners[id];
+        owners[1] = _JobsCreated[id].taker;
         // return [owner];
         return owners;
     }

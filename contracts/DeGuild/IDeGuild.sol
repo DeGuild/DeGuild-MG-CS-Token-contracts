@@ -29,6 +29,7 @@ interface IDeGuild {
         uint256 level;
         uint8 state;
         uint8 difficulty;
+        bool assigned;
     }
 
     /**

@@ -30,6 +30,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
      */
     mapping(uint256 => address) private _owners;
     mapping(address => uint256) private _currentJob;
+    mapping(address => uint256) private _exp;
+    mapping(address => bool) private _occupied;
 
     /**
      * @dev This mapping store all scrolls.
@@ -180,6 +182,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
             uint8
         )
     {
+        require(_exists(jobId), "ERC721: owner query for nonexistent token");
+
         Job memory info = _JobsCreated[jobId];
         return (
             info.reward,
@@ -193,65 +197,131 @@ contract DeGuild is Context, Ownable, IDeGuild {
     }
 
     function jobOf(address account) public view returns (uint256) {
-        require(account != address(0), "Querying on non-exist account");
         return _currentJob[account];
     }
 
     function forceCancel(uint256 id) public onlyOwner returns (bool) {
-        require(_exists(id), "Nonexistent token");
+        require(_exists(id), "ERC721: owner query for nonexistent token");
+        Job memory job = _JobsCreated[id];
         require(
-            _DGT.transfer(_owners[id], _JobsCreated[id].reward),
-            "Not enough fund"
+            job.state != 99 && job.state != 3,
+            "Already cancelled or completed"
         );
+        require(_DGT.transfer(_owners[id], job.reward), "Not enough fund");
 
-        _JobsCreated[id].state = 99;
+        job.state = 99;
+        emit StateChanged(id, 99);
+        return true;
+    }
+
+    function cancel(uint256 id) public returns (bool) {
+        require(_exists(id), "ERC721: owner query for nonexistent token");
+        Job memory job = _JobsCreated[id];
+        require(job.client == _msgSender(), "Only client can cancel this job!");
+        require(job.state == 1, "This job is already taken!");
+        require(_DGT.transfer(_owners[id], job.reward), "Not enough fund");
+
+        job.state = 99;
         emit StateChanged(id, 99);
         return true;
     }
 
     function take(uint256 id) public returns (bool) {
-        require(_exists(id), "Nonexistent token");
+        require(_exists(id), "ERC721: owner query for nonexistent token");
+        Job memory job = _JobsCreated[id];
         require(isQualified(id, _msgSender()), "Nonexistent token");
-        _JobsCreated[id].state = 2;
-        _JobsCreated[id].taker = _msgSender();
+        require(_occupied[_msgSender()], "You are already occupied!");
+        require(job.state == 1, "This job is not availble to be taken!");
+        if (job.assigned) {
+            require(job.taker == _msgSender(), "Assigned person is not you");
+        } else {
+            job.taker = _msgSender();
+        }
 
+        job.state = 2;
         emit StateChanged(id, 2);
 
         return true;
     }
 
     function complete(uint256 id) public returns (bool) {
-        require(_exists(id), "Nonexistent token");
-        require(
-            _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
-            "Not enough fund"
-        );
+        require(_exists(id), "ERC721: owner query for nonexistent token");
+        Job memory job = _JobsCreated[id];
 
-        _JobsCreated[id].state = 3;
-        _owners[id] = _JobsCreated[id].taker;
+        require(job.state == 2, "This job is not availble to be completed!");
+        require(
+            job.client == _msgSender(),
+            "Only client can complete this job!"
+        );
+        if (job.deadline <= block.timestamp) {
+            require(
+                _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
+                "Not enough fund"
+            );
+            unchecked {
+                _exp[job.taker] += job.difficulty * 100;
+                _exp[job.client] += job.difficulty * 10;
+            }
+        } else {
+            require(
+                _DGT.transfer(
+                    _JobsCreated[id].client,
+                    _JobsCreated[id].reward / 2
+                ),
+                "Not enough fund"
+            );
+            require(
+                _DGT.transfer(
+                    _JobsCreated[id].taker,
+                    _JobsCreated[id].reward - (_JobsCreated[id].reward / 2)
+                ),
+                "Not enough fund"
+            );
+            unchecked {
+                _exp[job.taker] += job.difficulty * 10;
+                _exp[job.client] += job.difficulty * 10;
+            }
+        }
+
+        job.state = 3;
+        _owners[id] = job.taker;
+
         emit StateChanged(id, 3);
 
         return true;
     }
 
     function report(uint256 id) public returns (bool) {
-        require(_exists(id), "Nonexistent token");
+        require(_exists(id), "ERC721: owner query for nonexistent token");
+        Job memory job = _JobsCreated[id];
+
+        require(job.state == 2, "This job is not availble to be reported!");
+        require(
+            job.client == _msgSender() || job.taker == _msgSender(),
+            "Only stakeholders can report this job!"
+        );
+
         uint256 fee = _JobsCreated[id].reward / 10;
         require(_DGT.transfer(owner(), fee), "Not enough fund");
 
-        _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
-        _JobsCreated[id].state = 99;
+        unchecked {
+            _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
+        }
+        _JobsCreated[id].state = 0;
         _owners[id] = owner();
-        emit StateChanged(id, 99);
+        emit StateChanged(id, 0);
 
         return true;
     }
 
-    function judge(uint256 id, uint8 decision) public returns (bool) {
-        require(_exists(id), "Nonexistent token");
+    function judge(uint256 id, bool decision) public onlyOwner returns (bool) {
+        require(_exists(id), "ERC721: owner query for nonexistent token");
+        Job memory job = _JobsCreated[id];
+
+        require(job.state == 0, "This job is not availble to be judged!");
 
         address winner;
-        if (decision > 0) {
+        if (decision) {
             winner = _JobsCreated[id].client;
         } else {
             winner = _JobsCreated[id].taker;
@@ -270,24 +340,33 @@ contract DeGuild is Context, Ownable, IDeGuild {
         address client,
         address taker,
         address[] memory skills,
-        uint256 deadline,
+        uint256 duration,
         uint8 difficulty
     ) public returns (bool) {
         uint256 level = 0;
+        uint256 wage = 0;
 
         if (difficulty == 5) {
             level = 100;
-            reward += 1000;
+            wage = 2000;
         } else if (difficulty == 4) {
             level = 75;
-            reward += 1000;
+            wage = 1000;
         } else if (difficulty == 3) {
             level = 50;
+            wage = 500;
         } else if (difficulty == 2) {
             level = 25;
+            wage = 100;
         } else {
             level = 0;
+            wage = 10;
         }
+        unchecked {
+            wage += reward;
+        }
+
+        require(_DGT.transfer(address(this), wage), "Not enough fund");
 
         _JobsCreated[tracker.current()] = Job({
             reward: reward,
@@ -295,9 +374,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
             taker: taker,
             state: 1,
             skills: skills,
-            deadline: deadline,
+            deadline: block.timestamp + (duration * 1 days),
             level: level,
-            difficulty: difficulty
+            difficulty: difficulty,
+            assigned: taker == address(0)
         });
         tracker.increment();
 

@@ -233,7 +233,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
             job.state != 99 && job.state != 3,
             "Already cancelled or completed"
         );
-        require(_DGT.transferFrom(address(this), _owners[id], job.reward), "Not enough fund");
+        require(
+            _DGT.transferFrom(address(this), _owners[id], job.reward),
+            "Not enough fund"
+        );
 
         job.state = 99;
         emit StateChanged(id, 99);
@@ -245,7 +248,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
         Job memory job = _JobsCreated[id];
         require(job.client == _msgSender(), "Only client can cancel this job!");
         require(job.state == 1, "This job is already taken!");
-        require(_DGT.transferFrom(address(this),_owners[id], job.reward), "Not enough fund");
+        require(
+            _DGT.transferFrom(address(this), _owners[id], job.reward),
+            "Not enough fund"
+        );
 
         job.state = 99;
         emit StateChanged(id, 99);
@@ -285,7 +291,11 @@ contract DeGuild is Context, Ownable, IDeGuild {
         );
 
         require(
-            _DGT.transferFrom(address(this),_JobsCreated[id].taker, _JobsCreated[id].reward),
+            _DGT.transferFrom(
+                address(this),
+                _JobsCreated[id].taker,
+                _JobsCreated[id].reward
+            ),
             "Not enough fund"
         );
         unchecked {
@@ -313,7 +323,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
         );
 
         uint256 fee = _JobsCreated[id].reward / 10;
-        require(_DGT.transferFrom(address(this), owner(), fee), "Not enough fund");
+        require(
+            _DGT.transferFrom(address(this), owner(), fee),
+            "Not enough fund"
+        );
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
@@ -407,6 +420,18 @@ contract DeGuild is Context, Ownable, IDeGuild {
             difficulty: difficulty,
             assigned: taker == address(0)
         });
+        emit JobAdded(
+            tracker.current(),
+            _JobsCreated[tracker.current()].reward,
+            _JobsCreated[tracker.current()].client,
+            _JobsCreated[tracker.current()].taker,
+            _JobsCreated[tracker.current()].skills,
+            _JobsCreated[tracker.current()].deadline,
+            _JobsCreated[tracker.current()].level,
+            _JobsCreated[tracker.current()].state,
+            _JobsCreated[tracker.current()].difficulty,
+            _JobsCreated[tracker.current()].assigned
+        );
         tracker.increment();
 
         return true;

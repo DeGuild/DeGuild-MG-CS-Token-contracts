@@ -40,7 +40,18 @@ interface IDeGuild {
     /**
      * @dev Emitted when `jobId` is minted.
      */
-    event JobAdded(uint256 jobId);
+    event JobAdded(
+        uint256 jobId,
+        uint256 reward,
+        address client,
+        address taker,
+        address[] skills,
+        uint256 deadline,
+        uint256 level,
+        uint8 state,
+        uint8 difficulty,
+        bool assigned
+    );
 
     /**
      * @dev Returns the shop name.

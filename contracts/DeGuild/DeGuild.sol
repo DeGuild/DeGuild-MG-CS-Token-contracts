@@ -200,6 +200,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
         return _currentJob[account];
     }
 
+    function expOf(address account) public view returns (uint256) {
+        return _exp[account];
+    }
+
     function forceCancel(uint256 id) public onlyOwner returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
@@ -229,6 +233,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
     function take(uint256 id) public returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
+        require(
+            _msgSender() != job.client,
+            "Abusing job taking is not allowed!"
+        );
         require(isQualified(id, _msgSender()), "Nonexistent token");
         require(_occupied[_msgSender()], "You are already occupied!");
         require(job.state == 1, "This job is not availble to be taken!");
@@ -253,34 +261,14 @@ contract DeGuild is Context, Ownable, IDeGuild {
             job.client == _msgSender(),
             "Only client can complete this job!"
         );
-        if (job.deadline <= block.timestamp) {
-            require(
-                _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
-                "Not enough fund"
-            );
-            unchecked {
-                _exp[job.taker] += job.difficulty * 100;
-                _exp[job.client] += job.difficulty * 10;
-            }
-        } else {
-            require(
-                _DGT.transfer(
-                    _JobsCreated[id].client,
-                    _JobsCreated[id].reward / 2
-                ),
-                "Not enough fund"
-            );
-            require(
-                _DGT.transfer(
-                    _JobsCreated[id].taker,
-                    _JobsCreated[id].reward - (_JobsCreated[id].reward / 2)
-                ),
-                "Not enough fund"
-            );
-            unchecked {
-                _exp[job.taker] += job.difficulty * 10;
-                _exp[job.client] += job.difficulty * 10;
-            }
+
+        require(
+            _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
+            "Not enough fund"
+        );
+        unchecked {
+            _exp[job.taker] += job.difficulty * 100;
+            _exp[job.client] += job.difficulty * 10;
         }
 
         job.state = 3;
@@ -296,6 +284,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         Job memory job = _JobsCreated[id];
 
         require(job.state == 2, "This job is not availble to be reported!");
+        require(job.deadline <= block.timestamp, "Report after deadline only!");
         require(
             job.client == _msgSender() || job.taker == _msgSender(),
             "Only stakeholders can report this job!"
@@ -336,13 +325,22 @@ contract DeGuild is Context, Ownable, IDeGuild {
     }
 
     function addJob(
-        uint256 reward,
-        address client,
+        uint256 bonus,
         address taker,
         address[] memory skills,
         uint256 duration,
         uint8 difficulty
     ) public returns (bool) {
+        require(
+            _msgSender() != taker,
+            "Abusing job taking is not allowed!"
+        );
+
+        require(
+            skills.length < 1000,
+            "Please keep your requirement skills under 1000 skills"
+        );
+
         uint256 level = 0;
         uint256 wage = 0;
 
@@ -363,14 +361,14 @@ contract DeGuild is Context, Ownable, IDeGuild {
             wage = 10;
         }
         unchecked {
-            wage += reward;
+            wage += bonus;
         }
 
         require(_DGT.transfer(address(this), wage), "Not enough fund");
 
         _JobsCreated[tracker.current()] = Job({
-            reward: reward,
-            client: client,
+            reward: wage,
+            client: _msgSender(),
             taker: taker,
             state: 1,
             skills: skills,

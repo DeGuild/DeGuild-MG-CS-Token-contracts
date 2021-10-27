@@ -82,10 +82,16 @@ interface IDeGuild {
      *
      * - `account` cannot be the zero address.
      */
-    function jobOf(address account)
-        external
-        view
-        returns (uint256);
+    function jobOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Returns the current job that `account` owned
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     */
+    function expOf(address account) external view returns (uint256);
 
     /**
      * @dev Returns true if `jobId` is purchasable for `taker`.
@@ -119,12 +125,12 @@ interface IDeGuild {
         view
         returns (
             uint256,
-        address,
-        address,
-        address[] memory,
-        uint256,
-        uint8,
-        uint8
+            address,
+            address,
+            address[] memory,
+            uint256,
+            uint8,
+            uint8
         );
 
     /**
@@ -154,6 +160,7 @@ interface IDeGuild {
      * - If the scroll is not fresh, reject it.
      */
     function take(uint256 id) external returns (bool);
+    
 
     /**
      * @dev Change `id` token state to 0 (Burned) and transfer ownership to address(0).
@@ -169,7 +176,7 @@ interface IDeGuild {
      * - If the scroll is not fresh, reject it.
      */
     function complete(uint256 id) external returns (bool);
-    
+
     function report(uint256 id) external returns (bool);
 
     /**
@@ -184,12 +191,10 @@ interface IDeGuild {
      * - The caller must be the owner of the shop.
      */
     function addJob(
-        uint256 reward,
-        address client,
+        uint256 bonus,
         address taker,
         address[] memory skills,
         uint256 deadline,
         uint8 difficulty
     ) external returns (bool);
-
 }

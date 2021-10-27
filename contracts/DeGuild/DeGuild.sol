@@ -420,6 +420,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
             difficulty: difficulty,
             assigned: taker == address(0)
         });
+        _owners[tracker.current()] = _msgSender();
         emit JobAdded(
             tracker.current(),
             _JobsCreated[tracker.current()].reward,

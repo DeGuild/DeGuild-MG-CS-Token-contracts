@@ -87,18 +87,6 @@ interface IDeGuild {
         returns (uint256);
 
     /**
-     * @dev Returns the jobs that `account` completed.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     */
-    function jobsCompleted(address account)
-        external
-        view
-        returns (uint256[] memory);
-
-    /**
      * @dev Returns true if `jobId` is purchasable for `taker`.
      *      Each scroll has its own conditions to purchase.
      */
@@ -202,7 +190,5 @@ interface IDeGuild {
         uint256 deadline,
         uint8 difficulty
     ) external returns (bool);
-
-    function appraise(address user) external returns (bool);
 
 }

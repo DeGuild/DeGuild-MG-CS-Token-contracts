@@ -30,11 +30,6 @@ contract DeGuild is Context, Ownable, IDeGuild {
      */
     mapping(uint256 => address) private _owners;
     mapping(address => uint256) private _currentJob;
-    mapping(address => uint256) private _levels;
-
-    mapping(address => uint256[]) private _jobsDone;
-    mapping(address => bool) private _appraisers;
-    EnumerableSet.AddressSet private _skillList;
 
     /**
      * @dev This mapping store all scrolls.
@@ -159,9 +154,9 @@ contract DeGuild is Context, Ownable, IDeGuild {
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
 
-        address[] memory skills = _skillList.values();
+        address[] memory skills = _JobsCreated[jobId].skills;
 
-        for (uint256 index = 0; index < _skillList.length(); index++) {
+        for (uint256 index = 0; index < skills.length; index++) {
             address skill = skills[index];
             bool confirm = ISkillCertificate(skill).verify(taker);
             if (!confirm) {
@@ -200,14 +195,6 @@ contract DeGuild is Context, Ownable, IDeGuild {
     function jobOf(address account) public view returns (uint256) {
         require(account != address(0), "Querying on non-exist account");
         return _currentJob[account];
-    }
-
-    function jobsCompleted(address account)
-        public
-        view
-        returns (uint256[] memory)
-    {
-        return _jobsDone[account];
     }
 
     function forceCancel(uint256 id) public onlyOwner returns (bool) {
@@ -314,22 +301,6 @@ contract DeGuild is Context, Ownable, IDeGuild {
         });
         tracker.increment();
 
-        return true;
-    }
-
-    function appraise(address user) public returns (bool) {
-        address[] memory skills = _skillList.values();
-        uint256 level = 0;
-
-        for (uint256 index = 0; index < _skillList.length(); index++) {
-            address skill = skills[index];
-            bool confirm = ISkillCertificate(skill).verify(user);
-            if (confirm) {
-                level+=1;
-            }
-        }
-
-        _levels[user] = level + _jobsDone[user].length;
         return true;
     }
 

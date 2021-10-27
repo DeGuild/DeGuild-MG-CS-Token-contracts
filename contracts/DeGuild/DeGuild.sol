@@ -239,6 +239,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
         );
 
         job.state = 99;
+        _occupied[job.taker] = false;
+
         emit StateChanged(id, 99);
         return true;
     }
@@ -254,6 +256,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         );
 
         job.state = 99;
+
         emit StateChanged(id, 99);
         return true;
     }
@@ -265,8 +268,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
             _msgSender() != job.client,
             "Abusing job taking is not allowed!"
         );
-        require(isQualified(id, _msgSender()), "Nonexistent token");
-        require(_occupied[_msgSender()], "You are already occupied!");
+        require(isQualified(id, _msgSender()), "You are not qualified!");
+        require(!_occupied[_msgSender()], "You are already occupied!");
         require(job.state == 1, "This job is not availble to be taken!");
         if (job.assigned) {
             require(job.taker == _msgSender(), "Assigned person is not you");
@@ -274,6 +277,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
             job.taker = _msgSender();
         }
 
+        _occupied[_msgSender()] = true;
+        _currentJob[_msgSender()] = id;
         job.state = 2;
         emit StateChanged(id, 2);
 
@@ -305,6 +310,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
 
         job.state = 3;
         _owners[id] = job.taker;
+        _occupied[job.taker] = false;
 
         emit StateChanged(id, 3);
 
@@ -353,14 +359,21 @@ contract DeGuild is Context, Ownable, IDeGuild {
         address winner;
         if (decision) {
             winner = _JobsCreated[id].client;
+            unchecked {
+                _exp[job.client] += job.difficulty * 10;
+            }
         } else {
             winner = _JobsCreated[id].taker;
+            unchecked {
+                _exp[job.taker] += job.difficulty * 100;
+            }
         }
 
         require(
             _DGT.transferFrom(address(this), winner, _JobsCreated[id].reward),
             "Not enough fund"
         );
+        _occupied[job.taker] = false;
 
         return true;
     }

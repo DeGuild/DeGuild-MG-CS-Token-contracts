@@ -152,6 +152,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
     function isQualified(uint256 jobId, address taker)
         public
         view
+        virtual
+        override
         returns (bool)
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
@@ -172,6 +174,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
     function jobInfo(uint256 jobId)
         public
         view
+        virtual
+        override
         returns (
             uint256,
             address,
@@ -196,41 +200,59 @@ contract DeGuild is Context, Ownable, IDeGuild {
         );
     }
 
-    function jobOf(address account) public view returns (uint256) {
+    function jobOf(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _currentJob[account];
     }
 
-    function expOf(address account) public view returns (uint256) {
+    function expOf(address account)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _exp[account];
     }
 
-    function forceCancel(uint256 id) public onlyOwner returns (bool) {
+    function forceCancel(uint256 id)
+        public
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
         require(
             job.state != 99 && job.state != 3,
             "Already cancelled or completed"
         );
-        require(_DGT.transfer(_owners[id], job.reward), "Not enough fund");
+        require(_DGT.transferFrom(address(this), _owners[id], job.reward), "Not enough fund");
 
         job.state = 99;
         emit StateChanged(id, 99);
         return true;
     }
 
-    function cancel(uint256 id) public returns (bool) {
+    function cancel(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
         require(job.client == _msgSender(), "Only client can cancel this job!");
         require(job.state == 1, "This job is already taken!");
-        require(_DGT.transfer(_owners[id], job.reward), "Not enough fund");
+        require(_DGT.transferFrom(address(this),_owners[id], job.reward), "Not enough fund");
 
         job.state = 99;
         emit StateChanged(id, 99);
         return true;
     }
 
-    function take(uint256 id) public returns (bool) {
+    function take(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
         require(
@@ -252,7 +274,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         return true;
     }
 
-    function complete(uint256 id) public returns (bool) {
+    function complete(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
 
@@ -263,7 +285,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         );
 
         require(
-            _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
+            _DGT.transferFrom(address(this),_JobsCreated[id].taker, _JobsCreated[id].reward),
             "Not enough fund"
         );
         unchecked {
@@ -279,7 +301,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         return true;
     }
 
-    function report(uint256 id) public returns (bool) {
+    function report(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
 
@@ -291,7 +313,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         );
 
         uint256 fee = _JobsCreated[id].reward / 10;
-        require(_DGT.transfer(owner(), fee), "Not enough fund");
+        require(_DGT.transferFrom(address(this), owner(), fee), "Not enough fund");
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
@@ -303,7 +325,13 @@ contract DeGuild is Context, Ownable, IDeGuild {
         return true;
     }
 
-    function judge(uint256 id, bool decision) public onlyOwner returns (bool) {
+    function judge(uint256 id, bool decision)
+        public
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
         require(_exists(id), "ERC721: owner query for nonexistent token");
         Job memory job = _JobsCreated[id];
 
@@ -317,7 +345,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         }
 
         require(
-            _DGT.transfer(winner, _JobsCreated[id].reward),
+            _DGT.transferFrom(address(this), winner, _JobsCreated[id].reward),
             "Not enough fund"
         );
 
@@ -330,11 +358,8 @@ contract DeGuild is Context, Ownable, IDeGuild {
         address[] memory skills,
         uint256 duration,
         uint8 difficulty
-    ) public returns (bool) {
-        require(
-            _msgSender() != taker,
-            "Abusing job taking is not allowed!"
-        );
+    ) public virtual override returns (bool) {
+        require(_msgSender() != taker, "Abusing job taking is not allowed!");
 
         require(
             skills.length < 1000,
@@ -364,7 +389,12 @@ contract DeGuild is Context, Ownable, IDeGuild {
             wage += bonus;
         }
 
-        require(_DGT.transfer(address(this), wage), "Not enough fund");
+        wage = wage * 1 ether;
+
+        require(
+            _DGT.transferFrom(_msgSender(), address(this), wage),
+            "Not enough fund"
+        );
 
         _JobsCreated[tracker.current()] = Job({
             reward: wage,

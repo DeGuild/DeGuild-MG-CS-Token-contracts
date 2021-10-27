@@ -146,6 +146,8 @@ interface IDeGuild {
      */
     function forceCancel(uint256 id) external returns (bool);
 
+    function cancel(uint256 id) external returns (bool);
+
     /**
      * @dev Change `id` token state to 2 (Consumed).
      *
@@ -160,7 +162,6 @@ interface IDeGuild {
      * - If the scroll is not fresh, reject it.
      */
     function take(uint256 id) external returns (bool);
-    
 
     /**
      * @dev Change `id` token state to 0 (Burned) and transfer ownership to address(0).
@@ -178,6 +179,8 @@ interface IDeGuild {
     function complete(uint256 id) external returns (bool);
 
     function report(uint256 id) external returns (bool);
+
+    function judge(uint256 id, bool decision) external returns (bool);
 
     /**
      * @dev Mint a type scroll.

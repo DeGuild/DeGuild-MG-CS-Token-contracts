@@ -10,7 +10,7 @@ contract DeGuildCenter is DeGuild {
         DeGuild(
             "Polygon Guild",
             "PGDG",
-            "https://us-central1-deguild-2021.cloudfunctions.net/public/readJob/",
+            "https://us-central1-deguild-2021.cloudfunctions.net/app/readJob/",
             address(0x4312D992940D0b110525f553160c9984b77D1EF4)
         )
     {

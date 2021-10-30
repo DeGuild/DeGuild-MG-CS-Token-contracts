@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 // starting in October.
 contract DeGuild is Context, Ownable, IDeGuild {
@@ -22,6 +23,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
     using Address for address;
     using ChecksumLib for address;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using ERC165Checker for address;
 
     /**
      * @dev Classic ERC721 mapping, tracking down the scrolls existed
@@ -381,7 +383,9 @@ contract DeGuild is Context, Ownable, IDeGuild {
     function verifySkills(address[] memory skills) public view returns (bool) {
         for (uint256 index = 0; index < skills.length; index++) {
             address skill = skills[index];
-            bool confirm = skill.isContract();
+            bool confirm = skill.supportsInterface(
+                type(ISkillCertificate).interfaceId
+            );
             if (!confirm) {
                 return false;
             }

@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-contract MagicScrolls is Context, Ownable, IMagicScrolls {
+contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
     /**
      * Libraries required, please use these!
      */

@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 // starting in October.
-contract DeGuild is Context, Ownable, IDeGuild {
+contract DeGuildPlus is Context, Ownable, IDeGuild {
     /**
      * Libraries required, please use these!
      */

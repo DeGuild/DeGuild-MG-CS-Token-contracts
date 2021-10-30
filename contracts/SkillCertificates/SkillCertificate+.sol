@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../Utils/EIP-55.sol";
 
-contract SkillCertificate is Context, Ownable, ISkillCertificate {
+contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
     /**
      * Libraries required, please use these!
      */

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./MagicScrolls.sol";
+import "./MagicScrolls+.sol";
 import "./IMagicScrolls.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-contract MagicShop is MagicScrolls, ERC165Storage {
+contract MagicShopPlus is MagicScrollsPlus, ERC165Storage {
     constructor()
-        MagicScrolls(
+        MagicScrollsPlus(
             "Mona's Magic Shop",
             "MMS",
             "https://us-central1-deguild-2021.cloudfunctions.net/app/readMagicScroll/",

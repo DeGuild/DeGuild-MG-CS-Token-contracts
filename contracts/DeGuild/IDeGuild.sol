@@ -144,6 +144,8 @@ interface IDeGuild {
             uint8
         );
 
+    function verifySkills(address[] memory skills) external view returns (bool);
+
     /**
      * @dev Change `id` token state to 99 (Cancelled).
      *
@@ -211,4 +213,5 @@ interface IDeGuild {
         uint256 deadline,
         uint8 difficulty
     ) external returns (bool);
+
 }

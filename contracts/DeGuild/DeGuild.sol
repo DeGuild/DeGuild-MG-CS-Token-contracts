@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 // starting in October.
 contract DeGuild is Context, Ownable, IDeGuild {
@@ -22,6 +23,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
     using Address for address;
     using ChecksumLib for address;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using ERC165Checker for address;
 
     /**
      * @dev Classic ERC721 mapping, tracking down the scrolls existed
@@ -378,6 +380,19 @@ contract DeGuild is Context, Ownable, IDeGuild {
         return true;
     }
 
+    function verifySkills(address[] memory skills) public view returns (bool) {
+        for (uint256 index = 0; index < skills.length; index++) {
+            address skill = skills[index];
+            bool confirm = skill.supportsInterface(
+                type(ISkillCertificate).interfaceId
+            );
+            if (!confirm) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function addJob(
         uint256 bonus,
         address taker,
@@ -388,9 +403,10 @@ contract DeGuild is Context, Ownable, IDeGuild {
         require(_msgSender() != taker, "Abusing job taking is not allowed!");
 
         require(
-            skills.length < 1000,
+            skills.length < 500,
             "Please keep your requirement skills under 1000 skills"
         );
+        require(verifySkills(skills), "All skills must support our interface");
 
         uint256 level = 0;
         uint256 wage = 0;

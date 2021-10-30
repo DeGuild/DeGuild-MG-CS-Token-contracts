@@ -6,7 +6,7 @@ async function main() {
   
     console.log("Account balance:", (await deployer.getBalance()).toString());
   
-    const Token = await ethers.getContractFactory("MagicShop+", {
+    const Token = await ethers.getContractFactory("MagicShopPlus", {
       libraries: {
         ChecksumLib: "0xE951a214ba33B7563FAf307041b31C1224aEf817",
       },

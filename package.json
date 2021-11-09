@@ -1,6 +1,6 @@
 { "scripts": {
   "deployD": "hardhat run scripts/deployDeGuild+.js --network rinkeby",
-  "verifyD": "hardhat verify --contract --contract contracts/DeGuild/V2/DeGuildCenter+.sol:DeGuildCenterPlus --network rinkeby",
+  "verifyD": "hardhat verify --contract contracts/DeGuild/V2/DeGuildCenter+.sol:DeGuildCenterPlus --network rinkeby",
   "deployM": "hardhat run scripts/deployMagicShop+.js --network rinkeby",
   "verifyM": "hardhat verify --contract contracts/MagicShop/V2/MagicShop+.sol:MagicShopPlus --network rinkeby",
   "deployC": "hardhat run scripts/deployCertificateManager+.js --network rinkeby",

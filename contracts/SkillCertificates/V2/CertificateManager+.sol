@@ -5,13 +5,13 @@ import "./SkillCertificate+.sol";
 import "./ISkillCertificate+.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-contract CertificateManager is SkillCertificatePlus, ERC165Storage {
+contract CertificateManagerPlus is SkillCertificatePlus, ERC165Storage {
     constructor()
         SkillCertificatePlus(
-            "Introduction to Computer Programming",
-            "ICCS101",
+            "Genius Manager",
+            "GM",
             "https://us-central1-deguild-2021.cloudfunctions.net/app/readCertificate/",
-            address(0x1B362371f11cAA26B1A993f7Ffd711c0B9966f70)
+            address(0xd37A01003632Fa8938f5feD5c9bb7d3be34368be)
         )
     {
         _registerInterface(type(ISkillCertificatePlus).interfaceId);

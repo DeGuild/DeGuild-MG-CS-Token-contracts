@@ -223,7 +223,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "Already cancelled or completed"
         );
         require(
-            _DGT.transferFrom(address(this), _owners[id], _JobsCreated[id].reward),
+            _DGT.transfer(
+                _owners[id],
+                _JobsCreated[id].reward
+            ),
             "Not enough fund"
         );
 
@@ -242,11 +245,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
         require(_JobsCreated[id].state == 1, "This job is already taken!");
         require(
-            _DGT.transferFrom(
-                address(this),
-                _owners[id],
-                _JobsCreated[id].reward
-            ),
+            _DGT.transfer(_owners[id], _JobsCreated[id].reward),
             "Not enough fund"
         );
 
@@ -297,11 +296,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
 
         require(
-            _DGT.transferFrom(
-                address(this),
-                _JobsCreated[id].taker,
-                _JobsCreated[id].reward
-            ),
+            _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
             "Not enough fund"
         );
 
@@ -327,10 +322,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
 
         uint256 fee = _JobsCreated[id].reward / 10;
-        require(
-            _DGT.transferFrom(address(this), owner(), fee),
-            "Not enough fund"
-        );
+        require(_DGT.transfer(owner(), fee), "Not enough fund");
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
@@ -363,7 +355,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         }
 
         require(
-            _DGT.transferFrom(address(this), winner, _JobsCreated[id].reward),
+            _DGT.transfer(winner, _JobsCreated[id].reward),
             "Not enough fund"
         );
         _occupied[_JobsCreated[id].taker] = false;

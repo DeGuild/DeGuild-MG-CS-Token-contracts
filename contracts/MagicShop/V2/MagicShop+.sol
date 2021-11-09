@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./MagicScrolls+.sol";
-import "./IMagicScrolls.sol";
+import "./IMagicScrolls+.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
 contract MagicShopPlus is MagicScrollsPlus, ERC165Storage {
@@ -14,6 +14,6 @@ contract MagicShopPlus is MagicScrollsPlus, ERC165Storage {
             address(0x4312D992940D0b110525f553160c9984b77D1EF4)
         )
     {
-        _registerInterface(type(IMagicScrolls).interfaceId);
+        _registerInterface(type(IMagicScrollsPlus).interfaceId);
     }
 }

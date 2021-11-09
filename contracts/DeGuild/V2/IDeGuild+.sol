@@ -26,7 +26,6 @@ interface IDeGuildPlus {
         address taker;
         address[] certificates;
         uint256[][] skills;
-        uint256 deadline;
         uint8 state;
         uint8 difficulty;
         bool assigned;
@@ -123,7 +122,6 @@ interface IDeGuildPlus {
             address,
             address[] memory,
             uint256[][] memory,
-            uint256,
             uint8,
             uint8
         );

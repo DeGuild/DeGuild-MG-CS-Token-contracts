@@ -182,7 +182,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             address,
             address[] memory,
             uint256[][] memory,
-            uint256,
             uint8,
             uint8
         )
@@ -196,7 +195,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             info.taker,
             info.certificates,
             info.skills,
-            info.deadline,
             info.state,
             info.difficulty
         );
@@ -272,7 +270,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         _occupied[_msgSender()] = true;
         _currentJob[_msgSender()] = id;
         job.state = 2;
-        job.deadline = job.deadline + block.timestamp;
         emit StateChanged(id, 2);
 
         return true;
@@ -428,7 +425,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             state: 1,
             certificates: certificates,
             skills: skills,
-            deadline: duration * 1 days,
             difficulty: difficulty,
             assigned: taker != address(0)
         });

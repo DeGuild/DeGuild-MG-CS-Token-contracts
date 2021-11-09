@@ -82,6 +82,10 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         return _addressShop;
     }
 
+    function typesExisted() public view virtual override returns (uint256) {
+        return _typeTracker.current();
+    }
+
     /**
      * @dev See {ISkillCertificate-typeAccepted}.
      */

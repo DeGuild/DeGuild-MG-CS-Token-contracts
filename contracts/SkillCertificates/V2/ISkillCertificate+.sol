@@ -31,6 +31,8 @@ interface ISkillCertificatePlus {
      */
     function shop() external view returns (address);
 
+    function typesExisted() external view returns (uint256);
+
     /**
      * @dev Returns the type of scroll accepted from associated shop address.
      */

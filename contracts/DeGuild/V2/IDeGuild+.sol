@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * It requires DGT & SkillCertificate to work around with. Basically, we try to make a shop out of it!
  * As the first version, here are the list of functions, events, and structs we used.
  */
-interface IDeGuild {
+interface IDeGuildPlus {
     /**
      * @dev This data type is used to store the data of a magic scroll.
      * reward           (uint256)    is the reward of that scroll.
@@ -24,7 +24,8 @@ interface IDeGuild {
         uint256 reward;
         address client;
         address taker;
-        address[] skills;
+        address[] certificates;
+        uint256[][] skills;
         uint256 deadline;
         uint256 level;
         uint8 state;
@@ -139,12 +140,16 @@ interface IDeGuild {
             address,
             address,
             address[] memory,
+            uint256[][] memory,
             uint256,
             uint8,
             uint8
         );
 
-    function verifySkills(address[] memory skills) external view returns (bool);
+    function verifySkills(
+        address[] memory certificates,
+        uint256[][] memory skills
+    ) external view returns (bool);
 
     /**
      * @dev Change `id` token state to 99 (Cancelled).
@@ -209,9 +214,9 @@ interface IDeGuild {
     function addJob(
         uint256 bonus,
         address taker,
-        address[] memory skills,
+        address[] memory certificates,
+        uint256[][] memory skills,
         uint256 deadline,
         uint8 difficulty
     ) external returns (bool);
-
 }

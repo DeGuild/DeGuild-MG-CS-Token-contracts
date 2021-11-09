@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IDeGuild.sol";
+import "./IDeGuild+.sol";
 import "contracts/SkillCertificates/V2/ISkillCertificate+.sol";
 import "contracts/Utils/EIP-55.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 // starting in October.
-contract DeGuildPlus is Context, Ownable, IDeGuild {
+contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     /**
      * Libraries required, please use these!
      */
@@ -160,13 +160,20 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
 
-        address[] memory skills = _JobsCreated[jobId].skills;
+        address[] memory certificates = _JobsCreated[jobId].certificates;
+        uint256[][] memory skills = _JobsCreated[jobId].skills;
 
-        for (uint256 index = 0; index < skills.length; index++) {
-            address skill = skills[index];
-            bool confirm = ISkillCertificatePlus(skill).verify(taker, 0);
-            if (!confirm) {
-                return false;
+        for (uint256 i = 0; i < certificates.length; i++) {
+            address certificate = certificates[i];
+            for (uint256 j = 0; i < skills[i].length; j++) {
+                if (
+                    !ISkillCertificatePlus(certificate).verify(
+                        taker,
+                        skills[i][j]
+                    )
+                ) {
+                    return false;
+                }
             }
         }
 
@@ -183,6 +190,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
             address,
             address,
             address[] memory,
+            uint256[][] memory,
             uint256,
             uint8,
             uint8
@@ -195,6 +203,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
             info.reward,
             info.client,
             info.taker,
+            info.certificates,
             info.skills,
             info.deadline,
             info.state,
@@ -380,14 +389,27 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
         return true;
     }
 
-    function verifySkills(address[] memory skills) public view virtual override returns (bool) {
-        for (uint256 index = 0; index < skills.length; index++) {
-            address skill = skills[index];
-            bool confirm = skill.supportsInterface(
-                type(ISkillCertificatePlus).interfaceId
-            );
-            if (!confirm) {
+    function verifySkills(
+        address[] memory certificates,
+        uint256[][] memory skills
+    ) public view virtual override returns (bool) {
+        for (uint256 i = 0; i < certificates.length; i++) {
+            address certificateManager = certificates[i];
+            if (
+                !certificateManager.supportsInterface(
+                    type(ISkillCertificatePlus).interfaceId
+                )
+            ) {
                 return false;
+            }
+            require(skills[i].length < 50, "Too many skills required");
+            for (uint256 j = 0; j < skills[i].length; j++) {
+                if (
+                    skills[i][j] >=
+                    ISkillCertificatePlus(certificateManager).typesExisted()
+                ) {
+                    return false;
+                }
             }
         }
         return true;
@@ -396,17 +418,27 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
     function addJob(
         uint256 bonus,
         address taker,
-        address[] memory skills,
+        address[] memory certificates,
+        uint256[][] memory skills,
         uint256 duration,
         uint8 difficulty
     ) public virtual override returns (bool) {
         require(_msgSender() != taker, "Abusing job taking is not allowed!");
 
         require(
-            skills.length < 500,
-            "Please keep your requirement skills under 1000 skills"
+            certificates.length < 10,
+            "Please keep your requirement certificates addresses under 10 address"
         );
-        require(verifySkills(skills), "All skills must support our interface");
+
+        require(
+            skills.length == certificates.length,
+            "Sizes of skills array and certificates array are not equal"
+        );
+
+        require(
+            verifySkills(certificates, skills),
+            "All skills must support our interface"
+        );
 
         uint256 level = 0;
         uint256 wage = 0;
@@ -443,6 +475,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
             client: _msgSender(),
             taker: taker,
             state: 1,
+            certificates: certificates,
             skills: skills,
             deadline: block.timestamp + (duration * 1 days),
             level: level,
@@ -455,7 +488,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
             _JobsCreated[tracker.current()].reward,
             _JobsCreated[tracker.current()].client,
             _JobsCreated[tracker.current()].taker,
-            _JobsCreated[tracker.current()].skills,
+            _JobsCreated[tracker.current()].certificates,
             _JobsCreated[tracker.current()].deadline,
             _JobsCreated[tracker.current()].level,
             _JobsCreated[tracker.current()].state,

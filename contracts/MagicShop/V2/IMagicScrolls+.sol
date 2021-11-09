@@ -45,6 +45,7 @@ interface IMagicScrollsPlus {
     event ScrollAdded(
         uint256 scrollID,
         uint256 price,
+        uint256 certificateId,
         address indexed prerequisite,
         bool lessonIncluded,
         bool hasPrerequisite,
@@ -181,6 +182,7 @@ interface IMagicScrollsPlus {
         returns (
             uint256,
             uint256,
+            uint256,
             address,
             bool,
             bool,
@@ -203,6 +205,7 @@ interface IMagicScrollsPlus {
         external
         view
         returns (
+            uint256,
             uint256,
             uint256,
             uint256,

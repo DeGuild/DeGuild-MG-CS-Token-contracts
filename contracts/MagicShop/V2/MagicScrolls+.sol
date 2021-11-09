@@ -348,6 +348,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         returns (
             uint256,
             uint256,
+            uint256,
             address,
             bool,
             bool,
@@ -359,6 +360,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         return (
             typeId,
             scroll.price,
+            scroll.certificateId,
             scroll.prerequisite,
             scroll.lessonIncluded,
             scroll.hasPrerequisite,
@@ -382,6 +384,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             uint256,
             uint256,
             uint256,
+            uint256,
             address,
             bool,
             bool
@@ -393,6 +396,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             tokenId,
             scroll.scrollID,
             scroll.price,
+            scroll.certificateId,
             scroll.prerequisite,
             scroll.lessonIncluded,
             scroll.hasPrerequisite
@@ -543,6 +547,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         emit ScrollAdded(
             variations.current(),
             price,
+            certificateId,
             prerequisite,
             lessonIncluded,
             hasPrerequisite,
@@ -551,18 +556,10 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         variations.increment();
     }
 
-    function _sealScroll(uint256 scrollType) private onlyOwner returns (bool) {
+    function _sealScroll(uint256 scrollType) private returns (bool) {
         require(_existsType(scrollType), "This scroll type does not exist");
 
         _scrollTypes[scrollType].available = false;
-        emit ScrollAdded(
-            _scrollTypes[scrollType].scrollID,
-            _scrollTypes[scrollType].price,
-            _scrollTypes[scrollType].prerequisite,
-            _scrollTypes[scrollType].lessonIncluded,
-            _scrollTypes[scrollType].hasPrerequisite,
-            _scrollTypes[scrollType].available
-        );
         return true;
     }
 

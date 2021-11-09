@@ -289,17 +289,19 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             _scrollTypes[scrollType].available,
             "This scroll type is no longer purchasable"
         );
-        require(
-            _scrollTypes[scrollType].prerequisite.supportsInterface(type(ISkillCertificatePlus).interfaceId),
-            "Address is not supported"
-        );
+
         if (!_scrollTypes[scrollType].hasPrerequisite) {
             return true;
         } else {
+            require(
+                _scrollTypes[scrollType].prerequisite.supportsInterface(
+                    type(ISkillCertificatePlus).interfaceId
+                ),
+                "Address is not supported"
+            );
             return
-                ISkillCertificatePlus(_scrollTypes[scrollType].prerequisite).verify(
-                    buyer, _scrollTypes[scrollType].certificateId
-                );
+                ISkillCertificatePlus(_scrollTypes[scrollType].prerequisite)
+                    .verify(buyer, _scrollTypes[scrollType].certificateId);
         }
     }
 
@@ -473,7 +475,13 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         bool hasPrerequisite,
         uint256 price
     ) external virtual override onlyOwner returns (bool) {
-        _addScroll(certificateId, prerequisite, lessonIncluded, hasPrerequisite, price);
+        _addScroll(
+            certificateId,
+            prerequisite,
+            lessonIncluded,
+            hasPrerequisite,
+            price
+        );
         return true;
     }
 
@@ -543,11 +551,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         variations.increment();
     }
 
-    function _sealScroll(uint256 scrollType)
-        private
-        onlyOwner
-        returns (bool)
-    {
+    function _sealScroll(uint256 scrollType) private onlyOwner returns (bool) {
         require(_existsType(scrollType), "This scroll type does not exist");
 
         _scrollTypes[scrollType].available = false;
@@ -608,7 +612,9 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     function _burn(uint256 id) private {
         require(_exists(id), "Nonexistent token");
         require(
-            _msgSender().supportsInterface(type(ISkillCertificatePlus).interfaceId),
+            _msgSender().supportsInterface(
+                type(ISkillCertificatePlus).interfaceId
+            ),
             "Address is not supported"
         );
         require(
@@ -641,11 +647,14 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             "You are not the certificate manager, consuming is reserved for the claiming exam key only."
         );
         require(
-            _msgSender().supportsInterface(type(ISkillCertificatePlus).interfaceId),
+            _msgSender().supportsInterface(
+                type(ISkillCertificatePlus).interfaceId
+            ),
             "Address is not supported"
         );
         require(
-            ISkillCertificatePlus(_msgSender()).typeAccepted(scrollType) == scrollType,
+            ISkillCertificatePlus(_msgSender()).typeAccepted(scrollType) ==
+                scrollType,
             "Wrong type of scroll to be consumed."
         );
         require(

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "contracts/DeGuild/IDeGuild.sol";
-import "../SkillCertificates/ISkillCertificate.sol";
-import "../Utils/EIP-55.sol";
+import "./IDeGuild.sol";
+import "contracts/SkillCertificates/V1/ISkillCertificate.sol";
+import "contracts/Utils/EIP-55.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -378,7 +378,7 @@ contract DeGuild is Context, Ownable, IDeGuild {
         return true;
     }
 
-    function verifySkills(address[] memory skills) public view returns (bool) {
+    function verifySkills(address[] memory skills) public view virtual override returns (bool) {
         for (uint256 index = 0; index < skills.length; index++) {
             address skill = skills[index];
             bool confirm = skill.isContract();

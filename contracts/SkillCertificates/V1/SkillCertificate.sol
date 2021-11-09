@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "./ISkillCertificate.sol";
-import "contracts/MagicShop/IMagicScrolls.sol";
+import "contracts/MagicShop/V1/IMagicScrolls.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../Utils/EIP-55.sol";
+import "contracts/Utils/EIP-55.sol";
 
 contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**

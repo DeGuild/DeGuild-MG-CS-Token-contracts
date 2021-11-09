@@ -370,7 +370,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             ) {
                 return false;
             }
-            require(skills[i].length < 50, "Too many skills required");
+            require(skills[i].length < 20, "Too many skills required");
             for (uint256 j = 0; j < skills[i].length; j++) {
                 if (
                     skills[i][j] >=
@@ -388,14 +388,13 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         address taker,
         address[] memory certificates,
         uint256[][] memory skills,
-        uint256 duration,
         uint8 difficulty
     ) public virtual override returns (bool) {
         require(_msgSender() != taker, "Abusing job taking is not allowed!");
 
         require(
-            certificates.length < 10,
-            "Please keep your requirement certificates addresses under 10 address"
+            certificates.length < 30,
+            "Please keep your requirement certificates addresses under 30 address"
         );
 
         require(

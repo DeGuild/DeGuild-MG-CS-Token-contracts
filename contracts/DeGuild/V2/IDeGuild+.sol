@@ -196,7 +196,6 @@ interface IDeGuildPlus {
         address taker,
         address[] memory certificates,
         uint256[][] memory skills,
-        uint256 deadline,
         uint8 difficulty
     ) external returns (bool);
 }

@@ -2,16 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "./ISkillCertificate.sol";
-import "contracts/MagicShop/IMagicScrolls.sol";
+import "contracts/MagicShop/V1/IMagicScrolls.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../Utils/EIP-55.sol";
+import "contracts/Utils/EIP-55.sol";
 
-contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
+contract SkillCertificate is Context, Ownable, ISkillCertificate {
     /**
      * Libraries required, please use these!
      */
@@ -19,7 +18,6 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
     using Strings for uint256;
     using Address for address;
     using ChecksumLib for address;
-    using ERC165Checker for address;
 
     /**
      * @dev Classic ERC721 mapping, tracking down the certificate existed
@@ -186,10 +184,6 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
         virtual
         onlyOwner
     {
-        require(
-            _addressShop.supportsInterface(type(IMagicScrolls).interfaceId),
-            "Address is not supported"
-        );
         require(
             IMagicScrolls(_addressShop).ownerOf(scrollOwnedID) == to,
             "Please burn the scroll owned by this address!"

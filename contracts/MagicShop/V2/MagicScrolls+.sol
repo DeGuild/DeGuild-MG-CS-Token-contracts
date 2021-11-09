@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../SkillCertificates/ISkillCertificate.sol";
-import "./IMagicScrolls.sol";
-import "../Utils/EIP-55.sol";
+import "contracts/SkillCertificates/V2/ISkillCertificate+.sol";
+import "./IMagicScrolls+.sol";
+import "contracts/Utils/EIP-55.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
+contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     /**
      * Libraries required, please use these!
      */
@@ -289,17 +289,19 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
             _scrollTypes[scrollType].available,
             "This scroll type is no longer purchasable"
         );
-        require(
-            _scrollTypes[scrollType].prerequisite.supportsInterface(type(ISkillCertificate).interfaceId),
-            "Address is not supported"
-        );
+
         if (!_scrollTypes[scrollType].hasPrerequisite) {
             return true;
         } else {
+            require(
+                _scrollTypes[scrollType].prerequisite.supportsInterface(
+                    type(ISkillCertificatePlus).interfaceId
+                ),
+                "Address is not supported"
+            );
             return
-                ISkillCertificate(_scrollTypes[scrollType].prerequisite).verify(
-                    buyer
-                );
+                ISkillCertificatePlus(_scrollTypes[scrollType].prerequisite)
+                    .verify(buyer, _scrollTypes[scrollType].certificateId);
         }
     }
 
@@ -467,12 +469,19 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
      * - The caller must be the owner of the shop.
      */
     function addScroll(
+        uint256 certificateId,
         address prerequisite,
         bool lessonIncluded,
         bool hasPrerequisite,
         uint256 price
     ) external virtual override onlyOwner returns (bool) {
-        _addScroll(prerequisite, lessonIncluded, hasPrerequisite, price);
+        _addScroll(
+            certificateId,
+            prerequisite,
+            lessonIncluded,
+            hasPrerequisite,
+            price
+        );
         return true;
     }
 
@@ -504,7 +513,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
      * - The caller must be the owner of the shop.
      */
     function sealScroll(uint256 scrollType)
-        external
+        public
         virtual
         override
         onlyOwner
@@ -515,14 +524,16 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
     }
 
     function _addScroll(
+        uint256 certificateId,
         address prerequisite,
         bool lessonIncluded,
         bool hasPrerequisite,
         uint256 price
-    ) internal virtual onlyOwner {
+    ) private {
         _scrollTypes[variations.current()] = MagicScroll({
             scrollID: variations.current(),
             price: price,
+            certificateId: certificateId,
             prerequisite: prerequisite, //certification required
             state: 1,
             lessonIncluded: lessonIncluded,
@@ -540,12 +551,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
         variations.increment();
     }
 
-    function _sealScroll(uint256 scrollType)
-        internal
-        virtual
-        onlyOwner
-        returns (bool)
-    {
+    function _sealScroll(uint256 scrollType) private onlyOwner returns (bool) {
         require(_existsType(scrollType), "This scroll type does not exist");
 
         _scrollTypes[scrollType].available = false;
@@ -560,11 +566,11 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
         return true;
     }
 
-    function _exists(uint256 tokenId) internal view virtual returns (bool) {
+    function _exists(uint256 tokenId) private view returns (bool) {
         return _owners[tokenId] != address(0);
     }
 
-    function _existsType(uint256 tokenId) internal view virtual returns (bool) {
+    function _existsType(uint256 tokenId) private view returns (bool) {
         require(
             variations.current() > tokenId,
             "There are not that many types of scroll"
@@ -577,11 +583,11 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
      * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
      * by default, can be overriden in child contracts.
      */
-    function _baseURI() internal view virtual returns (string memory) {
+    function _baseURI() private view returns (string memory) {
         return _baseURIscroll;
     }
 
-    function _buyScroll(uint256 scrollType) internal virtual {
+    function _buyScroll(uint256 scrollType) private {
         // check for validity to buy from interface for certificate
         require(
             isPurchasableScroll(scrollType, _msgSender()),
@@ -603,20 +609,17 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
         tracker.increment();
     }
 
-    function _burn(uint256 id) internal virtual {
-        uint256 scrollType = _scrollCreated[id].scrollID;
+    function _burn(uint256 id) private {
         require(_exists(id), "Nonexistent token");
         require(
-            _msgSender().supportsInterface(type(ISkillCertificate).interfaceId),
+            _msgSender().supportsInterface(
+                type(ISkillCertificatePlus).interfaceId
+            ),
             "Address is not supported"
         );
         require(
             isCertificateManager(_msgSender()),
             "You are not the certificate manager, burning is reserved for the claiming certificate only."
-        );
-        require(
-            ISkillCertificate(_msgSender()).typeAccepted() == scrollType,
-            "Wrong type of scroll to be burned."
         );
         require(
             _scrollCreated[id].state == 1 || _scrollCreated[id].state == 2,
@@ -629,7 +632,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
         emit StateChanged(id, _scrollCreated[id].state);
     }
 
-    function _forceCancel(uint256 id) internal virtual onlyOwner {
+    function _forceCancel(uint256 id) private onlyOwner {
         require(_exists(id), "Nonexistent token");
         _scrollCreated[id].state = 99; //Cancelled state id
         emit StateChanged(id, _scrollCreated[id].state);
@@ -644,11 +647,14 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrolls {
             "You are not the certificate manager, consuming is reserved for the claiming exam key only."
         );
         require(
-            _msgSender().supportsInterface(type(ISkillCertificate).interfaceId),
+            _msgSender().supportsInterface(
+                type(ISkillCertificatePlus).interfaceId
+            ),
             "Address is not supported"
         );
         require(
-            ISkillCertificate(_msgSender()).typeAccepted() == scrollType,
+            ISkillCertificatePlus(_msgSender()).typeAccepted(scrollType) ==
+                scrollType,
             "Wrong type of scroll to be consumed."
         );
         require(

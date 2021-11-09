@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "contracts/DeGuild/IDeGuild.sol";
-import "../SkillCertificates/ISkillCertificate.sol";
-import "../Utils/EIP-55.sol";
+import "./IDeGuild+.sol";
+import "contracts/SkillCertificates/V2/ISkillCertificate+.sol";
+import "contracts/Utils/EIP-55.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 // starting in October.
-contract DeGuildPlus is Context, Ownable, IDeGuild {
+contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     /**
      * Libraries required, please use these!
      */
@@ -22,7 +21,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
     using Strings for uint256;
     using Address for address;
     using ChecksumLib for address;
-    using EnumerableSet for EnumerableSet.AddressSet;
     using ERC165Checker for address;
 
     /**
@@ -32,7 +30,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
      */
     mapping(uint256 => address) private _owners;
     mapping(address => uint256) private _currentJob;
-    mapping(address => uint256) private _exp;
     mapping(address => bool) private _occupied;
 
     /**
@@ -139,16 +136,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
         view
         virtual
         override
-        returns (address[] memory)
+        returns (address, address)
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
-
-        address[] memory owners = new address[](2);
-
-        owners[0] = _owners[jobId];
-        owners[1] = _JobsCreated[jobId].taker;
-        // return [owner];
-        return owners;
+        return (_owners[jobId], _JobsCreated[jobId].taker);
     }
 
     function isQualified(uint256 jobId, address taker)
@@ -160,13 +151,20 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
 
-        address[] memory skills = _JobsCreated[jobId].skills;
+        address[] memory certificates = _JobsCreated[jobId].certificates;
+        uint256[][] memory skills = _JobsCreated[jobId].skills;
 
-        for (uint256 index = 0; index < skills.length; index++) {
-            address skill = skills[index];
-            bool confirm = ISkillCertificate(skill).verify(taker);
-            if (!confirm) {
-                return false;
+        for (uint256 i = 0; i < certificates.length; i++) {
+            address certificate = certificates[i];
+            for (uint256 j = 0; j < skills[i].length; j++) {
+                if (
+                    !ISkillCertificatePlus(certificate).verify(
+                        taker,
+                        skills[i][j]
+                    )
+                ) {
+                    return false;
+                }
             }
         }
 
@@ -183,7 +181,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
             address,
             address,
             address[] memory,
-            uint256,
+            uint256[][] memory,
             uint8,
             uint8
         )
@@ -195,8 +193,8 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
             info.reward,
             info.client,
             info.taker,
+            info.certificates,
             info.skills,
-            info.deadline,
             info.state,
             info.difficulty
         );
@@ -212,16 +210,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
         return _currentJob[account];
     }
 
-    function expOf(address account)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        return _exp[account];
-    }
-
     function forceCancel(uint256 id)
         public
         virtual
@@ -230,18 +218,20 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
         returns (bool)
     {
         require(_exists(id), "ERC721: owner query for nonexistent token");
-        Job memory job = _JobsCreated[id];
         require(
-            job.state != 99 && job.state != 3,
+            _JobsCreated[id].state != 99 && _JobsCreated[id].state != 3,
             "Already cancelled or completed"
         );
         require(
-            _DGT.transferFrom(address(this), _owners[id], job.reward),
+            _DGT.transfer(
+                _owners[id],
+                _JobsCreated[id].reward
+            ),
             "Not enough fund"
         );
 
-        job.state = 99;
-        _occupied[job.taker] = false;
+        _JobsCreated[id].state = 99;
+        _occupied[_JobsCreated[id].taker] = false;
 
         emit StateChanged(id, 99);
         return true;
@@ -249,15 +239,17 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
 
     function cancel(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
-        Job memory job = _JobsCreated[id];
-        require(job.client == _msgSender(), "Only client can cancel this job!");
-        require(job.state == 1, "This job is already taken!");
         require(
-            _DGT.transferFrom(address(this), _owners[id], job.reward),
+            _JobsCreated[id].client == _msgSender(),
+            "Only client can cancel this job!"
+        );
+        require(_JobsCreated[id].state == 1, "This job is already taken!");
+        require(
+            _DGT.transfer(_owners[id], _JobsCreated[id].reward),
             "Not enough fund"
         );
 
-        job.state = 99;
+        _JobsCreated[id].state = 99;
 
         emit StateChanged(id, 99);
         return true;
@@ -265,23 +257,28 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
 
     function take(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
-        Job memory job = _JobsCreated[id];
         require(
-            _msgSender() != job.client,
+            _msgSender() != _JobsCreated[id].client,
             "Abusing job taking is not allowed!"
         );
         require(isQualified(id, _msgSender()), "You are not qualified!");
         require(!_occupied[_msgSender()], "You are already occupied!");
-        require(job.state == 1, "This job is not availble to be taken!");
-        if (job.assigned) {
-            require(job.taker == _msgSender(), "Assigned person is not you");
+        require(
+            _JobsCreated[id].state == 1,
+            "This job is not availble to be taken!"
+        );
+        if (_JobsCreated[id].assigned) {
+            require(
+                _JobsCreated[id].taker == _msgSender(),
+                "Assigned person is not you"
+            );
         } else {
-            job.taker = _msgSender();
+            _JobsCreated[id].taker = _msgSender();
         }
 
         _occupied[_msgSender()] = true;
         _currentJob[_msgSender()] = id;
-        job.state = 2;
+        _JobsCreated[id].state = 2;
         emit StateChanged(id, 2);
 
         return true;
@@ -289,30 +286,23 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
 
     function complete(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
-        Job memory job = _JobsCreated[id];
-
-        require(job.state == 2, "This job is not availble to be completed!");
         require(
-            job.client == _msgSender(),
+            _JobsCreated[id].state == 2,
+            "This job is not availble to be completed!"
+        );
+        require(
+            _JobsCreated[id].client == _msgSender(),
             "Only client can complete this job!"
         );
 
         require(
-            _DGT.transferFrom(
-                address(this),
-                _JobsCreated[id].taker,
-                _JobsCreated[id].reward
-            ),
+            _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
             "Not enough fund"
         );
-        unchecked {
-            _exp[job.taker] += job.difficulty * 100;
-            _exp[job.client] += job.difficulty * 10;
-        }
 
-        job.state = 3;
-        _owners[id] = job.taker;
-        _occupied[job.taker] = false;
+        _JobsCreated[id].state = 3;
+        _owners[id] = _JobsCreated[id].taker;
+        _occupied[_JobsCreated[id].taker] = false;
 
         emit StateChanged(id, 3);
 
@@ -321,20 +311,18 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
 
     function report(uint256 id) public virtual override returns (bool) {
         require(_exists(id), "ERC721: owner query for nonexistent token");
-        Job memory job = _JobsCreated[id];
-
-        require(job.state == 2, "This job is not availble to be reported!");
-        require(job.deadline <= block.timestamp, "Report after deadline only!");
         require(
-            job.client == _msgSender() || job.taker == _msgSender(),
+            _JobsCreated[id].state == 2,
+            "This job is not availble to be reported!"
+        );
+        require(
+            _JobsCreated[id].client == _msgSender() ||
+                _JobsCreated[id].taker == _msgSender(),
             "Only stakeholders can report this job!"
         );
 
         uint256 fee = _JobsCreated[id].reward / 10;
-        require(
-            _DGT.transferFrom(address(this), owner(), fee),
-            "Not enough fund"
-        );
+        require(_DGT.transfer(owner(), fee), "Not enough fund");
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
@@ -354,40 +342,48 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
         returns (bool)
     {
         require(_exists(id), "ERC721: owner query for nonexistent token");
-        Job memory job = _JobsCreated[id];
-
-        require(job.state == 0, "This job is not availble to be judged!");
+        require(
+            _JobsCreated[id].state == 0,
+            "This job is not availble to be judged!"
+        );
 
         address winner;
         if (decision) {
             winner = _JobsCreated[id].client;
-            unchecked {
-                _exp[job.client] += job.difficulty * 10;
-            }
         } else {
             winner = _JobsCreated[id].taker;
-            unchecked {
-                _exp[job.taker] += job.difficulty * 100;
-            }
         }
 
         require(
-            _DGT.transferFrom(address(this), winner, _JobsCreated[id].reward),
+            _DGT.transfer(winner, _JobsCreated[id].reward),
             "Not enough fund"
         );
-        _occupied[job.taker] = false;
+        _occupied[_JobsCreated[id].taker] = false;
 
         return true;
     }
 
-    function verifySkills(address[] memory skills) public view returns (bool) {
-        for (uint256 index = 0; index < skills.length; index++) {
-            address skill = skills[index];
-            bool confirm = skill.supportsInterface(
-                type(ISkillCertificate).interfaceId
-            );
-            if (!confirm) {
+    function verifySkills(
+        address[] memory certificates,
+        uint256[][] memory skills
+    ) public view virtual override returns (bool) {
+        for (uint256 i = 0; i < certificates.length; i++) {
+            address certificateManager = certificates[i];
+            if (
+                !certificateManager.supportsInterface(
+                    type(ISkillCertificatePlus).interfaceId
+                )
+            ) {
                 return false;
+            }
+            require(skills[i].length < 20, "Too many skills required");
+            for (uint256 j = 0; j < skills[i].length; j++) {
+                if (
+                    skills[i][j] >=
+                    ISkillCertificatePlus(certificateManager).typesExisted()
+                ) {
+                    return false;
+                }
             }
         }
         return true;
@@ -396,43 +392,30 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
     function addJob(
         uint256 bonus,
         address taker,
-        address[] memory skills,
-        uint256 duration,
+        address[] memory certificates,
+        uint256[][] memory skills,
         uint8 difficulty
     ) public virtual override returns (bool) {
         require(_msgSender() != taker, "Abusing job taking is not allowed!");
 
         require(
-            skills.length < 500,
-            "Please keep your requirement skills under 1000 skills"
+            certificates.length < 30,
+            "Please keep your requirement certificates addresses under 30 address"
         );
-        require(verifySkills(skills), "All skills must support our interface");
 
-        uint256 level = 0;
-        uint256 wage = 0;
+        require(
+            skills.length == certificates.length,
+            "Sizes of skills array and certificates array are not equal"
+        );
 
-        if (difficulty == 5) {
-            level = 100;
-            wage = 2000;
-        } else if (difficulty == 4) {
-            level = 75;
-            wage = 1000;
-        } else if (difficulty == 3) {
-            level = 50;
-            wage = 500;
-        } else if (difficulty == 2) {
-            level = 25;
-            wage = 100;
-        } else {
-            level = 0;
-            wage = 10;
-        }
+        require(
+            verifySkills(certificates, skills),
+            "All skills must support our interface"
+        );
+        uint256 wage;
         unchecked {
-            wage += bonus;
+            wage = ((difficulty * 100) * difficulty + bonus) * 1 ether;
         }
-
-        wage = wage * 1 ether;
-
         require(
             _DGT.transferFrom(_msgSender(), address(this), wage),
             "Not enough fund"
@@ -443,24 +426,15 @@ contract DeGuildPlus is Context, Ownable, IDeGuild {
             client: _msgSender(),
             taker: taker,
             state: 1,
+            certificates: certificates,
             skills: skills,
-            deadline: block.timestamp + (duration * 1 days),
-            level: level,
             difficulty: difficulty,
-            assigned: taker == address(0)
+            assigned: taker != address(0)
         });
         _owners[tracker.current()] = _msgSender();
         emit JobAdded(
             tracker.current(),
-            _JobsCreated[tracker.current()].reward,
-            _JobsCreated[tracker.current()].client,
-            _JobsCreated[tracker.current()].taker,
-            _JobsCreated[tracker.current()].skills,
-            _JobsCreated[tracker.current()].deadline,
-            _JobsCreated[tracker.current()].level,
-            _JobsCreated[tracker.current()].state,
-            _JobsCreated[tracker.current()].difficulty,
-            _JobsCreated[tracker.current()].assigned
+            _JobsCreated[tracker.current()].client
         );
         tracker.increment();
 

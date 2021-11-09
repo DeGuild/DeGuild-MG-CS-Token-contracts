@@ -27,7 +27,6 @@ interface IDeGuildPlus {
         address[] certificates;
         uint256[][] skills;
         uint256 deadline;
-        uint256 level;
         uint8 state;
         uint8 difficulty;
         bool assigned;
@@ -43,15 +42,7 @@ interface IDeGuildPlus {
      */
     event JobAdded(
         uint256 jobId,
-        uint256 reward,
-        address client,
-        address taker,
-        address[] skills,
-        uint256 deadline,
-        uint256 level,
-        uint8 state,
-        uint8 difficulty,
-        bool assigned
+        address client
     );
 
     /**
@@ -85,7 +76,7 @@ interface IDeGuildPlus {
      *
      * - `id` must exist.
      */
-    function ownersOf(uint256 id) external view returns (address[] memory);
+    function ownersOf(uint256 id) external view returns (address, address);
 
     /**
      * @dev Returns the current job that `account` owned
@@ -95,15 +86,6 @@ interface IDeGuildPlus {
      * - `account` cannot be the zero address.
      */
     function jobOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Returns the current job that `account` owned
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     */
-    function expOf(address account) external view returns (uint256);
 
     /**
      * @dev Returns true if `jobId` is purchasable for `taker`.

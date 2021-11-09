@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 // starting in October.
@@ -22,7 +21,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     using Strings for uint256;
     using Address for address;
     using ChecksumLib for address;
-    using EnumerableSet for EnumerableSet.AddressSet;
     using ERC165Checker for address;
 
     /**
@@ -32,7 +30,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      */
     mapping(uint256 => address) private _owners;
     mapping(address => uint256) private _currentJob;
-    mapping(address => uint256) private _exp;
     mapping(address => bool) private _occupied;
 
     /**
@@ -139,16 +136,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         view
         virtual
         override
-        returns (address[] memory)
+        returns (address, address)
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
-
-        address[] memory owners = new address[](2);
-
-        owners[0] = _owners[jobId];
-        owners[1] = _JobsCreated[jobId].taker;
-        // return [owner];
-        return owners;
+        return (_owners[jobId], _JobsCreated[jobId].taker);
     }
 
     function isQualified(uint256 jobId, address taker)
@@ -221,16 +212,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         return _currentJob[account];
     }
 
-    function expOf(address account)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        return _exp[account];
-    }
-
     function forceCancel(uint256 id)
         public
         virtual
@@ -291,6 +272,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         _occupied[_msgSender()] = true;
         _currentJob[_msgSender()] = id;
         job.state = 2;
+        job.deadline = job.deadline + block.timestamp;
         emit StateChanged(id, 2);
 
         return true;
@@ -314,10 +296,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             ),
             "Not enough fund"
         );
-        unchecked {
-            _exp[job.taker] += job.difficulty * 100;
-            _exp[job.client] += job.difficulty * 10;
-        }
 
         job.state = 3;
         _owners[id] = job.taker;
@@ -333,7 +311,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         Job memory job = _JobsCreated[id];
 
         require(job.state == 2, "This job is not availble to be reported!");
-        require(job.deadline <= block.timestamp, "Report after deadline only!");
         require(
             job.client == _msgSender() || job.taker == _msgSender(),
             "Only stakeholders can report this job!"
@@ -370,14 +347,8 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         address winner;
         if (decision) {
             winner = _JobsCreated[id].client;
-            unchecked {
-                _exp[job.client] += job.difficulty * 10;
-            }
         } else {
             winner = _JobsCreated[id].taker;
-            unchecked {
-                _exp[job.taker] += job.difficulty * 100;
-            }
         }
 
         require(
@@ -440,31 +411,11 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "All skills must support our interface"
         );
 
-        uint256 level = 0;
         uint256 wage = 0;
 
-        if (difficulty == 5) {
-            level = 100;
-            wage = 2000;
-        } else if (difficulty == 4) {
-            level = 75;
-            wage = 1000;
-        } else if (difficulty == 3) {
-            level = 50;
-            wage = 500;
-        } else if (difficulty == 2) {
-            level = 25;
-            wage = 100;
-        } else {
-            level = 0;
-            wage = 10;
-        }
         unchecked {
-            wage += bonus;
+            wage = ((difficulty * 100) * difficulty + bonus) * 1 ether;
         }
-
-        wage = wage * 1 ether;
-
         require(
             _DGT.transferFrom(_msgSender(), address(this), wage),
             "Not enough fund"
@@ -477,23 +428,14 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             state: 1,
             certificates: certificates,
             skills: skills,
-            deadline: block.timestamp + (duration * 1 days),
-            level: level,
+            deadline: duration * 1 days,
             difficulty: difficulty,
-            assigned: taker == address(0)
+            assigned: taker != address(0)
         });
         _owners[tracker.current()] = _msgSender();
         emit JobAdded(
             tracker.current(),
-            _JobsCreated[tracker.current()].reward,
-            _JobsCreated[tracker.current()].client,
-            _JobsCreated[tracker.current()].taker,
-            _JobsCreated[tracker.current()].certificates,
-            _JobsCreated[tracker.current()].deadline,
-            _JobsCreated[tracker.current()].level,
-            _JobsCreated[tracker.current()].state,
-            _JobsCreated[tracker.current()].difficulty,
-            _JobsCreated[tracker.current()].assigned
+            _JobsCreated[tracker.current()].client
         );
         tracker.increment();
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ISkillCertificate+.sol";
-import "contracts/MagicShop/V2/IMagicScrolls.sol";
+import "contracts/MagicShop/V2/IMagicScrolls+.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -46,7 +46,8 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     /**
      * @dev Store the ID of certificates
      */
-   mapping(uint256 => Counters.Counter) private tracker;
+    mapping(uint256 => Counters.Counter) private _trackers;
+    Counters.Counter private _typeTracker = Counters.Counter(0);
 
     constructor(
         string memory name_,
@@ -125,13 +126,59 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
      * - The caller must be the owner of the shop.
      */
     function verify(address student, uint256 typeId)
-        external
+        public
         view
         virtual
         override
         returns (bool)
     {
         return _certified[typeId][student];
+    }
+
+    /**
+     * @dev See {ISkillCertificate-tokenURI}.
+     *
+     * Requirements:
+     *
+     * - `tokenId` cannot be non-existence token.
+     */
+    function tokenURI(uint256 typeId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        string memory baseURI = _baseURI();
+        return
+            bytes(baseURI).length > 0
+                ? string(
+                    abi.encodePacked(
+                        baseURI,
+                        abi.encodePacked(
+                            address(this).getChecksum(),
+                            abi.encodePacked("/", typeId.toString())
+                        )
+                    )
+                )
+                : "";
+    }
+
+    function addCertificate(uint256 scrollTypeId)
+        public
+        virtual
+        override
+        onlyOwner
+        returns (bool)
+    {
+        _addCertificate(scrollTypeId);
+        return true;
+    }
+
+    function _addCertificate(uint256 scrollTypeId) private {
+        _scrollType[_typeTracker.current()] = scrollTypeId;
+        _trackers[_typeTracker.current()] = Counters.Counter(0);
+        _typeTracker.increment();
     }
 
     /**
@@ -171,12 +218,15 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     function _exists(uint256 tokenId, uint256 typeId)
-        internal
+        private
         view
-        virtual
         returns (bool)
     {
         return _owners[typeId][tokenId] != address(0);
+    }
+
+    function _existsType(uint256 typeId) private view returns (bool) {
+        return _typeTracker.current() > typeId;
     }
 
     /**
@@ -184,7 +234,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
      * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
      * by default, can be overriden in child contracts.
      */
-    function _baseURI() internal view virtual returns (string memory) {
+    function _baseURI() private view returns (string memory) {
         return _baseURIscroll;
     }
 
@@ -192,59 +242,37 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         address to,
         uint256 scrollOwnedID,
         uint256 typeId
-    ) internal virtual onlyOwner {
+    ) private {
+        require(_existsType(typeId), "You cannot mint to non-existing type");
         require(
-            _addressShop.supportsInterface(type(IMagicScrolls).interfaceId),
+            _addressShop.supportsInterface(type(IMagicScrollsPlus).interfaceId),
             "Address is not supported"
         );
         require(
-            IMagicScrolls(_addressShop).ownerOf(scrollOwnedID) == to,
+            IMagicScrollsPlus(_addressShop).ownerOf(scrollOwnedID) == to,
             "Please burn the scroll owned by this address!"
         );
+        (, uint256 scrollType, , , , ) = IMagicScrollsPlus(_addressShop)
+            .scrollInfo(scrollOwnedID);
         require(
-            IMagicScrolls(_addressShop).burn(scrollOwnedID),
+            scrollType == typeId,
+            "You cannot burn this type of scroll for this type of certificate!"
+        );
+        require(
+            IMagicScrollsPlus(_addressShop).burn(scrollOwnedID),
             "Cannot burn the scroll!"
         );
 
-        _owners[typeId][tracker[typeId].current()] = to;
-        emit CertificateMinted(to, tracker[typeId].current());
-        tracker[typeId].increment();
+        _owners[typeId][_trackers[typeId].current()] = to;
+        emit CertificateMinted(to, _trackers[typeId].current());
+        _trackers[typeId].increment();
         _certified[typeId][to] = true;
     }
 
-    function _burn(uint256 tokenId, uint256 typeId) internal virtual onlyOwner {
+    function _burn(uint256 tokenId, uint256 typeId) private {
         require(_exists(tokenId, typeId), "Nonexistent token");
         emit CertificateBurned(_owners[typeId][tokenId], tokenId);
         _certified[typeId][_owners[typeId][tokenId]] = false;
         _owners[typeId][tokenId] = address(0);
-    }
-
-    /**
-     * @dev See {ISkillCertificate-tokenURI}.
-     *
-     * Requirements:
-     *
-     * - `tokenId` cannot be non-existence token.
-     */
-    function tokenURI(uint256 typeId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
-        string memory baseURI = _baseURI();
-        return
-            bytes(baseURI).length > 0
-                ? string(
-                    abi.encodePacked(
-                        baseURI,
-                        abi.encodePacked(
-                            address(this).getChecksum(),
-                            abi.encodePacked("/", typeId.toString())
-                        )
-                    )
-                )
-                : "";
     }
 }

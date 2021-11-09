@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * NFT style interface, but it does not simple transfer like other ERC721 and ERC1155
+ * NFT style interface, but it does not simple transfer like other ERC1155
  * It requires MagicScrolls to work around with. Basically, we try to make a certificate out of it!
  */
 interface ISkillCertificatePlus {
@@ -48,7 +48,10 @@ interface ISkillCertificatePlus {
      *
      * - `id` must exist.
      */
-    function ownerOfType(uint256 tokenId, uint256 typeId) external view returns (address);
+    function ownerOfType(uint256 tokenId, uint256 typeId)
+        external
+        view
+        returns (address);
 
     /**
      * @dev Change `id` token state to 99 (Cancelled).
@@ -61,7 +64,14 @@ interface ISkillCertificatePlus {
      * - `id` must exist.
      * - The caller must be the owner of the shop.
      */
-    function verify(address student, uint256 typeId) external view returns (bool);
+    function verify(address student, uint256 typeId)
+        external
+        view
+        returns (bool);
+
+    function addCertificate(uint256 scrollTypeId)
+        external
+        returns (bool);
 
     /**
      * @dev Burn `id` token to address(0) (Also, void the certification).
@@ -87,5 +97,9 @@ interface ISkillCertificatePlus {
      * - `to` must the owner of `scrollOwnedID`.
      * - `scrollOwnedID` must be burned.
      */
-    function mint(address to, uint256 scrollOwnedID, uint256 typeId) external returns (bool);
+    function mint(
+        address to,
+        uint256 scrollOwnedID,
+        uint256 typeId
+    ) external returns (bool);
 }

@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * It requires DGT & SkillCertificate to work around with. Basically, we try to make a shop out of it!
  * As the first version, here are the list of functions, events, and structs we used.
  */
-interface IMagicScrolls {
+interface IMagicScrollsPlus {
     /**
      * @dev This data type is used to store the data of a magic scroll.
      * scrollID         (uint256) is the unique type of that scroll.
@@ -21,6 +21,7 @@ interface IMagicScrolls {
     struct MagicScroll {
         uint256 scrollID;
         uint256 price;
+        uint256 certificateId;
         address prerequisite;
         uint8 state;
         bool lessonIncluded;
@@ -278,6 +279,7 @@ interface IMagicScrolls {
      * - The caller must be the owner of the shop.
      */
     function addScroll(
+        uint256 certificateId,
         address prerequisite,
         bool lessonIncluded,
         bool hasPrerequisite,

@@ -48,7 +48,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     /**
      * @dev Store the ID of scrolls and types
      */
-    Counters.Counter private tracker = Counters.Counter(0);
+    Counters.Counter private tracker = Counters.Counter(1);
 
     /**
      * @dev Store the interface of Deguild Token
@@ -139,7 +139,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         returns (address, address)
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
-        return (_owners[jobId], _JobsCreated[jobId].taker);
+        return ( _JobsCreated[jobId].client, _JobsCreated[jobId].taker);
     }
 
     function isQualified(uint256 jobId, address taker)
@@ -207,6 +207,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         override
         returns (uint256)
     {
+        require(_occupied[account], "This account is free to work");
         return _currentJob[account];
     }
 

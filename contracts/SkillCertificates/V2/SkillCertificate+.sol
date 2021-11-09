@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ISkillCertificate.sol";
-import "contracts/MagicShop/IMagicScrolls.sol";
+import "./ISkillCertificate+.sol";
+import "contracts/MagicShop/V2/IMagicScrolls.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../Utils/EIP-55.sol";
+import "../../Utils/EIP-55.sol";
 
-contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
+contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     /**
      * Libraries required, please use these!
      */
@@ -22,12 +22,12 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
     using ERC165Checker for address;
 
     /**
-     * @dev Classic ERC721 mapping, tracking down the certificate existed
+     * @dev Classic ERC1155 mapping, tracking down the certificate existed
      * We need to know exactly what happened to the certificate
      * so we keep track of those certificates here.
      */
-    mapping(uint256 => address) private _owners;
-    mapping(address => bool) private _certified;
+    mapping(uint256 => mapping(uint256 => address)) private _owners;
+    mapping(uint256 => mapping(address => bool)) private _certified;
 
     /**
      * @dev Store the addresses of the shop.
@@ -41,25 +41,23 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
     /**
      * @dev Store the type that this certificate manager accept.
      */
-    uint256 private _scrollType;
+    mapping(uint256 => uint256) private _scrollType;
 
     /**
      * @dev Store the ID of certificates
      */
-    Counters.Counter private tracker = Counters.Counter(0);
+   mapping(uint256 => Counters.Counter) private tracker;
 
     constructor(
         string memory name_,
         string memory symbol_,
         string memory baseURI_,
-        address addressShop_,
-        uint256 scrollType_
+        address addressShop_
     ) {
         _name = name_;
         _symbol = symbol_;
         _baseURIscroll = baseURI_;
         _addressShop = addressShop_;
-        _scrollType = scrollType_;
     }
 
     /**
@@ -86,8 +84,14 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
     /**
      * @dev See {ISkillCertificate-typeAccepted}.
      */
-    function typeAccepted() external view virtual override returns (uint256) {
-        return _scrollType;
+    function typeAccepted(uint256 typeId)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        return _scrollType[typeId];
     }
 
     /**
@@ -97,14 +101,14 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
      *
      * - `id` must exist.
      */
-    function ownerOf(uint256 id)
+    function ownerOfType(uint256 tokenId, uint256 tokenType)
         public
         view
         virtual
         override
         returns (address)
     {
-        address owner = _owners[id];
+        address owner = _owners[tokenType][tokenId];
         require(
             owner != address(0),
             "ERC721: owner query for nonexistent token"
@@ -120,14 +124,14 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
      * - `id` must exist.
      * - The caller must be the owner of the shop.
      */
-    function verify(address student)
+    function verify(address student, uint256 typeId)
         external
         view
         virtual
         override
         returns (bool)
     {
-        return _certified[student];
+        return _certified[typeId][student];
     }
 
     /**
@@ -138,14 +142,14 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
      * - `id` must exist.
      * - The caller must be the owner of the shop.
      */
-    function forceBurn(uint256 id)
+    function forceBurn(uint256 id, uint256 typeId)
         external
         virtual
         override
         onlyOwner
         returns (bool)
     {
-        _burn(id);
+        _burn(id, typeId);
         return true;
     }
 
@@ -157,19 +161,22 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
      * - `to` must the owner of `scrollOwnedID`.
      * - `scrollOwnedID` must be burned.
      */
-    function mint(address to, uint256 scrollOwnedID)
-        external
-        virtual
-        override
-        onlyOwner
-        returns (bool)
-    {
-        _mint(to, scrollOwnedID);
+    function mint(
+        address to,
+        uint256 scrollOwnedID,
+        uint256 typeId
+    ) external virtual override onlyOwner returns (bool) {
+        _mint(to, scrollOwnedID, typeId);
         return true;
     }
 
-    function _exists(uint256 tokenId) internal view virtual returns (bool) {
-        return _owners[tokenId] != address(0);
+    function _exists(uint256 tokenId, uint256 typeId)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        return _owners[typeId][tokenId] != address(0);
     }
 
     /**
@@ -181,11 +188,11 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
         return _baseURIscroll;
     }
 
-    function _mint(address to, uint256 scrollOwnedID)
-        internal
-        virtual
-        onlyOwner
-    {
+    function _mint(
+        address to,
+        uint256 scrollOwnedID,
+        uint256 typeId
+    ) internal virtual onlyOwner {
         require(
             _addressShop.supportsInterface(type(IMagicScrolls).interfaceId),
             "Address is not supported"
@@ -199,17 +206,17 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
             "Cannot burn the scroll!"
         );
 
-        _owners[tracker.current()] = to;
-        emit CertificateMinted(to, tracker.current());
-        tracker.increment();
-        _certified[to] = true;
+        _owners[typeId][tracker[typeId].current()] = to;
+        emit CertificateMinted(to, tracker[typeId].current());
+        tracker[typeId].increment();
+        _certified[typeId][to] = true;
     }
 
-    function _burn(uint256 tokenId) internal virtual onlyOwner {
-        require(_exists(tokenId), "Nonexistent token");
-        emit CertificateBurned(_owners[tokenId], tokenId);
-        _certified[_owners[tokenId]] = false;
-        _owners[tokenId] = address(0);
+    function _burn(uint256 tokenId, uint256 typeId) internal virtual onlyOwner {
+        require(_exists(tokenId, typeId), "Nonexistent token");
+        emit CertificateBurned(_owners[typeId][tokenId], tokenId);
+        _certified[typeId][_owners[typeId][tokenId]] = false;
+        _owners[typeId][tokenId] = address(0);
     }
 
     /**
@@ -219,11 +226,25 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificate {
      *
      * - `tokenId` cannot be non-existence token.
      */
-    function tokenURI() public view virtual override returns (string memory) {
+    function tokenURI(uint256 typeId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
         string memory baseURI = _baseURI();
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, address(this).getChecksum()))
+                ? string(
+                    abi.encodePacked(
+                        baseURI,
+                        abi.encodePacked(
+                            address(this).getChecksum(),
+                            abi.encodePacked("/", typeId.toString())
+                        )
+                    )
+                )
                 : "";
     }
 }

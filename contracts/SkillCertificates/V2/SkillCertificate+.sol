@@ -256,7 +256,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
             IMagicScrollsPlus(_addressShop).ownerOf(scrollOwnedID) == to,
             "Please burn the scroll owned by this address!"
         );
-        (, uint256 scrollType, , , , ) = IMagicScrollsPlus(_addressShop)
+        (, uint256 scrollType, , , , , ) = IMagicScrollsPlus(_addressShop)
             .scrollInfo(scrollOwnedID);
         require(
             scrollType == typeId,

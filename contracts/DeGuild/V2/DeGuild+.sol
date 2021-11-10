@@ -114,7 +114,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      * @dev See {IMagicScrolls-numberOfScrollTypes}.
      */
     function jobsCount() external view virtual override returns (uint256) {
-        return tracker.current();
+        return tracker.current() - 1;
     }
 
     /**

@@ -113,12 +113,11 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         override
         returns (address)
     {
-        address owner = _owners[tokenType][tokenId];
         require(
-            owner != address(0),
+            _exists(tokenId, tokenType),
             "ERC721: owner query for nonexistent token"
         );
-        return owner;
+        return _owners[tokenType][tokenId];
     }
 
     /**
@@ -153,6 +152,10 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         override
         returns (string memory)
     {
+        require(
+            _existsType(typeId),
+            "ERC721: owner query for nonexistent token"
+        );
         string memory baseURI = _baseURI();
         return
             bytes(baseURI).length > 0
@@ -177,12 +180,6 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     {
         _addCertificate(scrollTypeId);
         return true;
-    }
-
-    function _addCertificate(uint256 scrollTypeId) private {
-        _scrollType[_typeTracker.current()] = scrollTypeId;
-        _trackers[_typeTracker.current()] = Counters.Counter(0);
-        _typeTracker.increment();
     }
 
     /**
@@ -231,6 +228,12 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
 
     function _existsType(uint256 typeId) private view returns (bool) {
         return _typeTracker.current() > typeId;
+    }
+
+    function _addCertificate(uint256 scrollTypeId) private {
+        _scrollType[_typeTracker.current()] = scrollTypeId;
+        _trackers[_typeTracker.current()] = Counters.Counter(0);
+        _typeTracker.increment();
     }
 
     /**

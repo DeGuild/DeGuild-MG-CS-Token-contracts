@@ -234,7 +234,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         _JobsCreated[id].state = 99;
         _occupied[_JobsCreated[id].taker] = false;
 
-        emit StateChanged(id, 99);
         return true;
     }
 
@@ -252,7 +251,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
 
         _JobsCreated[id].state = 99;
 
-        emit StateChanged(id, 99);
         return true;
     }
 
@@ -280,8 +278,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         _occupied[_msgSender()] = true;
         _currentJob[_msgSender()] = id;
         _JobsCreated[id].state = 2;
-        emit StateChanged(id, 2);
-
         return true;
     }
 
@@ -305,7 +301,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         _owners[id] = _JobsCreated[id].taker;
         _occupied[_JobsCreated[id].taker] = false;
 
-        emit StateChanged(id, 3);
+        emit JobCompleted(
+            tracker.current(),
+            _JobsCreated[tracker.current()].taker
+        );
 
         return true;
     }
@@ -330,7 +329,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         }
         _JobsCreated[id].state = 0;
         _owners[id] = owner();
-        emit StateChanged(id, 0);
 
         return true;
     }

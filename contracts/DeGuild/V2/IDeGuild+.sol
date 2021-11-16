@@ -32,17 +32,11 @@ interface IDeGuildPlus {
     }
 
     /**
-     * @dev Emitted when `jobId` make changes to its state, changing to `jobState`.
-     */
-    event StateChanged(uint256 jobId, uint8 jobState);
-
-    /**
      * @dev Emitted when `jobId` is minted.
      */
-    event JobAdded(
-        uint256 jobId,
-        address client
-    );
+    event JobAdded(uint256 jobId, address indexed client);
+    event JobCompleted(uint256 jobId, address indexed taker);
+    event JobCaseClosed(uint256 jobId, address indexed criminal);
 
     /**
      * @dev Returns the shop name.

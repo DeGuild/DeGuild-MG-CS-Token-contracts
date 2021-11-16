@@ -258,7 +258,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "Abusing job taking is not allowed!"
         );
         require(isQualified(id, _msgSender()), "You are not qualified!");
-        require(_currentJob[_msgSender()] != 0, "You are already occupied!");
+        require(_currentJob[_msgSender()] == 0, "You are already occupied!");
         require(
             _JobsCreated[id].state == 1,
             "This job is not availble to be taken!"

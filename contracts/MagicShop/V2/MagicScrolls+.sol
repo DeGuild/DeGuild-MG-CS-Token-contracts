@@ -545,13 +545,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             available: true
         });
         emit ScrollAdded(
-            variations.current(),
-            price,
-            certificateId,
-            prerequisite,
-            lessonIncluded,
-            hasPrerequisite,
-            true
+            variations.current()
         );
         variations.increment();
     }
@@ -602,7 +596,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         _owners[tracker.current()] = _msgSender();
         _balances[scrollType][_msgSender()]++;
 
-        emit ScrollBought(tracker.current(), scrollType);
+        emit ScrollBought(tracker.current(), scrollType, _msgSender());
         tracker.increment();
     }
 

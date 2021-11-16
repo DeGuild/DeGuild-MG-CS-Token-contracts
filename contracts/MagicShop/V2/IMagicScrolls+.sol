@@ -37,19 +37,13 @@ interface IMagicScrollsPlus {
     /**
      * @dev Emitted when `scrollId` is minted based from scroll of type `scrollType`.
      */
-    event ScrollBought(uint256 scrollId, uint256 scrollType);
+    event ScrollBought(uint256 scrollId, uint256 indexed scrollType, address buyer);
 
     /**
      * @dev Emitted when a new scroll is added, giving that scroll of type `scrollId` is ready to be minted.
      */
     event ScrollAdded(
-        uint256 scrollID,
-        uint256 price,
-        uint256 certificateId,
-        address indexed prerequisite,
-        bool lessonIncluded,
-        bool hasPrerequisite,
-        bool available
+        uint256 indexed scrollType
     );
 
     /**

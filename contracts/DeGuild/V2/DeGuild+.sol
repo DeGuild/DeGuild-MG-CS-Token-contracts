@@ -302,8 +302,8 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         _occupied[_JobsCreated[id].taker] = false;
 
         emit JobCompleted(
-            tracker.current(),
-            _JobsCreated[tracker.current()].taker
+            id,
+            _JobsCreated[id].taker
         );
 
         return true;

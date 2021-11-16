@@ -139,7 +139,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         returns (address, address)
     {
         require(_exists(jobId), "ERC721: owner query for nonexistent token");
-        return ( _JobsCreated[jobId].client, _JobsCreated[jobId].taker);
+        return (_JobsCreated[jobId].client, _JobsCreated[jobId].taker);
     }
 
     function isQualified(uint256 jobId, address taker)
@@ -224,15 +224,13 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "Already cancelled or completed"
         );
         require(
-            _DGT.transfer(
-                _owners[id],
-                _JobsCreated[id].reward
-            ),
+            _DGT.transfer(_owners[id], _JobsCreated[id].reward),
             "Not enough fund"
         );
 
         _JobsCreated[id].state = 99;
         _occupied[_JobsCreated[id].taker] = false;
+        _owners[id] = address(0);
 
         return true;
     }
@@ -250,6 +248,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
 
         _JobsCreated[id].state = 99;
+        _owners[id] = address(0);
 
         return true;
     }
@@ -301,10 +300,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         _owners[id] = _JobsCreated[id].taker;
         _occupied[_JobsCreated[id].taker] = false;
 
-        emit JobCompleted(
-            id,
-            _JobsCreated[id].taker
-        );
+        emit JobCompleted(id, _JobsCreated[id].taker);
 
         return true;
     }
@@ -347,16 +343,20 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
 
         address winner;
+        address loser;
         if (decision) {
             winner = _JobsCreated[id].client;
+            loser = _JobsCreated[id].taker;
         } else {
             winner = _JobsCreated[id].taker;
+            loser = _JobsCreated[id].client;
         }
 
         require(
             _DGT.transfer(winner, _JobsCreated[id].reward),
             "Not enough fund"
         );
+        emit JobCaseClosed(id, loser);
         _occupied[_JobsCreated[id].taker] = false;
 
         return true;

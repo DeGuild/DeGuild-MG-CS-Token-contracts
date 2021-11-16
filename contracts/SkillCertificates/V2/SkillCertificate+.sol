@@ -271,14 +271,14 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         );
 
         _owners[typeId][_trackers[typeId].current()] = to;
-        emit CertificateMinted(to, _trackers[typeId].current());
+        emit CertificateMinted(to, _trackers[typeId].current(), typeId);
         _trackers[typeId].increment();
         _certified[typeId][to] = true;
     }
 
     function _burn(uint256 tokenId, uint256 typeId) private {
         require(_exists(tokenId, typeId), "Nonexistent token");
-        emit CertificateBurned(_owners[typeId][tokenId], tokenId);
+        emit CertificateBurned(_owners[typeId][tokenId], tokenId, typeId);
         _certified[typeId][_owners[typeId][tokenId]] = false;
         _owners[typeId][tokenId] = address(0);
     }

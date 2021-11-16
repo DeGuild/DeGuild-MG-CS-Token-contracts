@@ -9,12 +9,12 @@ interface ISkillCertificatePlus {
     /**
      * @dev Emitted when `scrollId` certificate is minted for `student`.
      */
-    event CertificateMinted(address student, uint256 scrollId);
+    event CertificateMinted(address indexed student, uint256 scrollId, uint256 typeId);
 
     /**
      * @dev Emitted when `scrollId` certificate is burned for `student`.
      */
-    event CertificateBurned(address student, uint256 scrollId);
+    event CertificateBurned(address indexed student, uint256 scrollId, uint256 typeId);
 
     /**
      * @dev Returns the certificate name.

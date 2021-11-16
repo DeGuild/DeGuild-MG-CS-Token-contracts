@@ -413,7 +413,9 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
         uint256 wage;
         unchecked {
-            wage = ((difficulty * difficulty * 100) + bonus) * 1 ether;
+            wage =
+                ((uint256(difficulty) * uint256(difficulty) * 100) + bonus) *
+                1 ether;
         }
         require(
             _DGT.transferFrom(_msgSender(), address(this), wage),

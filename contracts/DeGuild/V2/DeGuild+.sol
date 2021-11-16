@@ -30,7 +30,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      */
     mapping(uint256 => address) private _owners;
     mapping(address => uint256) private _currentJob;
-    mapping(address => bool) private _occupied;
 
     /**
      * @dev This mapping store all scrolls.
@@ -207,7 +206,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         override
         returns (uint256)
     {
-        require(_occupied[account], "This account is free to work");
         return _currentJob[account];
     }
 
@@ -229,7 +227,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
 
         _JobsCreated[id].state = 99;
-        _occupied[_JobsCreated[id].taker] = false;
+        _currentJob[_JobsCreated[id].taker] = 0;
         _owners[id] = address(0);
 
         return true;
@@ -260,7 +258,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "Abusing job taking is not allowed!"
         );
         require(isQualified(id, _msgSender()), "You are not qualified!");
-        require(!_occupied[_msgSender()], "You are already occupied!");
+        require(_currentJob[_msgSender()] != 0, "You are already occupied!");
         require(
             _JobsCreated[id].state == 1,
             "This job is not availble to be taken!"
@@ -274,9 +272,9 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             _JobsCreated[id].taker = _msgSender();
         }
 
-        _occupied[_msgSender()] = true;
         _currentJob[_msgSender()] = id;
         _JobsCreated[id].state = 2;
+
         return true;
     }
 
@@ -297,8 +295,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
 
         _JobsCreated[id].state = 3;
-        _owners[id] = _JobsCreated[id].taker;
-        _occupied[_JobsCreated[id].taker] = false;
+        _currentJob[_JobsCreated[id].taker] = 0;
 
         emit JobCompleted(id, _JobsCreated[id].taker);
 
@@ -324,7 +321,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
         }
         _JobsCreated[id].state = 0;
-        _owners[id] = owner();
+        emit JobCaseOpened(id);
 
         return true;
     }
@@ -357,7 +354,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "Not enough fund"
         );
         emit JobCaseClosed(id, loser);
-        _occupied[_JobsCreated[id].taker] = false;
 
         return true;
     }

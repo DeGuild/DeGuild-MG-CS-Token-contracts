@@ -36,6 +36,7 @@ interface IDeGuildPlus {
      */
     event JobAdded(uint256 jobId, address indexed client);
     event JobCompleted(uint256 jobId, address indexed taker);
+    event JobCaseOpened(uint256 indexed jobId);
     event JobCaseClosed(uint256 jobId, address indexed criminal);
 
     /**

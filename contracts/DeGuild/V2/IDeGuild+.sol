@@ -35,6 +35,7 @@ interface IDeGuildPlus {
      * @dev Emitted when `jobId` is minted.
      */
     event JobAdded(uint256 jobId, address indexed client);
+    event JobTaken(uint256 jobId, address indexed taker);
     event JobCompleted(uint256 jobId, address indexed taker);
     event JobCaseOpened(uint256 indexed jobId);
     event JobCaseClosed(uint256 jobId, address indexed criminal);

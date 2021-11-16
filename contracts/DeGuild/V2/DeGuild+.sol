@@ -274,6 +274,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
 
         _currentJob[_msgSender()] = id;
         _JobsCreated[id].state = 2;
+        emit JobTaken(id, _JobsCreated[id].taker);
 
         return true;
     }

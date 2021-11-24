@@ -26,18 +26,21 @@ pragma solidity ^0.8.0;
  */
 interface IDeGuildPlus {
     /**
-     * @dev This data type is used to store the data of a magic scroll.
-     * reward           (uint256)       is the reward of that scroll.
-     * client           (address)       is the address of the certificate manager (any address is fine, if it has no prerequisite).
-     * taker            (address)       is the address of the certificate manager (any address is fine, if it has no prerequisite).
-     * certificates     (address[])     is the address of the certificate manager (any address is fine, if it has no prerequisite).
-     * skills           (address[][])   is the address of the certificate manager (any address is fine, if it has no prerequisite).
-     * state            (uint8)         is the state of the scroll (Consumed or cancelled or fresh).
-     * deadline         (uint256)       is the state telling that this scroll can be used for unlocking learning materials off-chain.
-     * level            (uint256)       is the state telling that this scroll can be used for unlocking learning materials off-chain.
-     * state            (uint8)         is the state telling that this scroll requires a certificate from the certificate manager given.
-     * difficulty       (uint8)         is the state telling that this scroll is no longer purchasable
-     *                                  (only used to check the availability to mint various magic scroll types)
+     * @dev This data type is used to store the data of a job.
+     * reward           (uint256)       is the reward of that job.
+     * client           (address)       is the address of the client.
+     * taker            (address)       is the address of the taker.
+     * certificates     (address[])     is the addresses of the certificate manager.
+     * skills           (address[][])   is the array of the certificate manager tokens array.
+     * state            (uint8)         is the state of the job.
+     *                                      - 1 means the job is available
+     *                                      - 2 means the job is taken
+     *                                      - 3 means the job is completed
+     *                                      - 0 means the job is reported
+     *                                      - 99 means the job is cancelled and will be burned (not found)
+     *
+     * difficulty       (uint8)         is the level of job difficulty
+     * assigned         (uint8)         is true when the job is assigned to specific account.
      */
     struct Job {
         uint256 reward;
@@ -51,12 +54,28 @@ interface IDeGuildPlus {
     }
 
     /**
-     * @dev Emitted when `jobId` is minted.
+     * @dev Emitted when `jobId` is minted and state is 1.
      */
     event JobAdded(uint256 jobId, address indexed client);
+
+    /**
+     * @dev Emitted when `jobId` state is 2.
+     */
     event JobTaken(uint256 jobId, address indexed taker);
+
+    /**
+     * @dev Emitted when `jobId` state is 3.
+     */
     event JobCompleted(uint256 jobId, address indexed taker);
+
+    /**
+     * @dev Emitted when `jobId` state is 0.
+     */
     event JobCaseOpened(uint256 indexed jobId);
+
+    /**
+     * @dev Emitted when `jobId` state is 3 and criminal is banned.
+     */
     event JobCaseClosed(uint256 jobId, address indexed criminal);
 
     /**
@@ -103,7 +122,7 @@ interface IDeGuildPlus {
 
     /**
      * @dev Returns true if `jobId` is purchasable for `taker`.
-     *      Each scroll has its own conditions to purchase.
+     *      Each job has its own conditions to purchase.
      */
     function isQualified(uint256 jobId, address taker)
         external
@@ -149,7 +168,7 @@ interface IDeGuildPlus {
     /**
      * @dev Change `id` token state to 99 (Cancelled).
      *
-     * Usage : Neutralize the scroll if something fishy occurred with the owner.
+     * Usage : Neutralize the job if something fishy occurred with the owner.
      * Emits a {StateChanged} event.
      *
      * Requirements:
@@ -171,8 +190,8 @@ interface IDeGuildPlus {
      *
      * - `id` must exist.
      * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of scroll, we also reject this call.
-     * - If the scroll is not fresh, reject it.
+     * - If the certificate manager do not accept this type of job, we also reject this call.
+     * - If the job is not fresh, reject it.
      */
     function take(uint256 id) external returns (bool);
 
@@ -186,8 +205,8 @@ interface IDeGuildPlus {
      *
      * - `id` must exist.
      * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of scroll, we also reject this call.
-     * - If the scroll is not fresh, reject it.
+     * - If the certificate manager do not accept this type of job, we also reject this call.
+     * - If the job is not fresh, reject it.
      */
     function complete(uint256 id) external returns (bool);
 
@@ -196,14 +215,14 @@ interface IDeGuildPlus {
     function judge(uint256 id, bool decision) external returns (bool);
 
     /**
-     * @dev Mint a type scroll.
+     * @dev Mint a type job.
      *
-     * Usage : Add a magic scroll
-     * Emits a {ScrollAdded} event.
+     * Usage : Add a magic job
+     * Emits a {jobAdded} event.
      *
      * Requirements:
      *
-     * - `scroll` type must be purchasable.
+     * - `job` type must be purchasable.
      * - The caller must be the owner of the shop.
      */
     function addJob(

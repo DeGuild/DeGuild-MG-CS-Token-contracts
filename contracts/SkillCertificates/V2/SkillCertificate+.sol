@@ -62,21 +62,21 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     /**
-     * @dev See {ISkillCertificate-name}.
+     * @dev See {ISkillCertificatePlus-name}.
      */
     function name() external view virtual override returns (string memory) {
         return _name;
     }
 
     /**
-     * @dev See {ISkillCertificate-symbol}.
+     * @dev See {ISkillCertificatePlus-symbol}.
      */
     function symbol() external view virtual override returns (string memory) {
         return _symbol;
     }
 
     /**
-     * @dev See {ISkillCertificate-shop}.
+     * @dev See {ISkillCertificatePlus-shop}.
      */
     function shop() public view virtual override returns (address) {
         return _addressShop;
@@ -87,7 +87,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     /**
-     * @dev See {ISkillCertificate-typeAccepted}.
+     * @dev See {ISkillCertificatePlus-typeAccepted}.
      */
     function typeAccepted(uint256 typeId)
         external
@@ -100,7 +100,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     /**
-     * @dev See {ISkillCertificate-ownerOf}.
+     * @dev See {ISkillCertificatePlus-ownerOf}.
      *
      * Requirements:
      *
@@ -115,13 +115,13 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     {
         require(
             _exists(tokenId, tokenType),
-            "ERC721: owner query for nonexistent token"
+            "ISkillCertificate: owner query for nonexistent token"
         );
         return _owners[tokenType][tokenId];
     }
 
     /**
-     * @dev See {ISkillCertificate-verify}.
+     * @dev See {ISkillCertificatePlus-verify}.
      *
      * Requirements:
      *
@@ -139,7 +139,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     /**
-     * @dev See {ISkillCertificate-tokenURI}.
+     * @dev See {ISkillCertificatePlus-tokenURI}.
      *
      * Requirements:
      *
@@ -154,7 +154,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     {
         require(
             _existsType(typeId),
-            "ERC721: owner query for nonexistent token"
+            "ISkillCertificate: owner query for nonexistent token"
         );
         string memory baseURI = _baseURI();
         return
@@ -171,6 +171,13 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
                 : "";
     }
 
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     *
+     * Requirements:
+     *
+     * - `tokenId` cannot be non-existence token.
+     */
     function addCertificate(uint256 scrollTypeId)
         public
         virtual
@@ -183,7 +190,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     /**
-     * @dev See {ISkillCertificate-forceBurn}.
+     * @dev See {ISkillCertificatePlus-forceBurn}.
      *
      * Requirements:
      *
@@ -202,7 +209,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     /**
-     * @dev See {ISkillCertificate-mint}.
+     * @dev See {ISkillCertificatePlus-mint}.
      *
      * Requirements:
      *
@@ -219,7 +226,7 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     /**
-     * @dev See {ISkillCertificate-mint}.
+     * @dev See {ISkillCertificatePlus-mint}.
      *
      * Requirements:
      *
@@ -231,8 +238,14 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         uint256[] memory scrollOwnedID,
         uint256 typeId
     ) external virtual override onlyOwner returns (bool) {
-        require(to.length < 1000, "Too many addresses");
-        require(to.length == scrollOwnedID.length, "array sizes not matched");
+        require(
+            to.length < 1000,
+            "ISkillCertificate: cannot mint more than 1000 addresses"
+        );
+        require(
+            to.length == scrollOwnedID.length,
+            "ISkillCertificate: array sizes not equal"
+        );
         for (uint256 index = 0; index < to.length; index++) {
             _mint(to[index], scrollOwnedID[index], typeId);
         }
@@ -252,6 +265,15 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     function _addCertificate(uint256 scrollTypeId) private {
+        require(
+            _addressShop.supportsInterface(type(IMagicScrollsPlus).interfaceId),
+            "ISkillCertificate: IMagicScrollsPlus is not supported by this address"
+        );
+        require(
+            IMagicScrollsPlus(_addressShop).numberOfScrollTypes() >
+                scrollTypeId,
+            "ISkillCertificate: the shop does not have that many scroll types"
+        );
         _scrollType[_typeTracker.current()] = scrollTypeId;
         _trackers[_typeTracker.current()] = Counters.Counter(0);
         _typeTracker.increment();
@@ -271,34 +293,36 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         uint256 scrollOwnedID,
         uint256 typeId
     ) private {
-        require(_existsType(typeId), "You cannot mint to non-existing type");
+        require(
+            _existsType(typeId),
+            "ISkillCertificate: owner query for non-existing type of certificate"
+        );
         require(
             _addressShop.supportsInterface(type(IMagicScrollsPlus).interfaceId),
-            "Address is not supported"
+            "ISkillCertificate: IMagicScrollsPlus is not supported by this address"
         );
         require(
             IMagicScrollsPlus(_addressShop).ownerOf(scrollOwnedID) == to,
-            "Please burn the scroll owned by this address!"
+            "ISkillCertificate: cannot burn this scroll with this owner"
         );
         (, uint256 scrollType, , , , , ) = IMagicScrollsPlus(_addressShop)
             .scrollInfo(scrollOwnedID);
         require(
             scrollType == typeId,
-            "You cannot burn this type of scroll for this type of certificate!"
+            "ISkillCertificate: cannot burn this type of scroll for this type of certificate"
         );
         require(
             IMagicScrollsPlus(_addressShop).burn(scrollOwnedID),
-            "Cannot burn the scroll!"
+            "ISkillCertificate: cannot burn the scroll"
         );
-
+        _certified[typeId][to] = true;
         _owners[typeId][_trackers[typeId].current()] = to;
         emit CertificateMinted(to, _trackers[typeId].current(), typeId);
         _trackers[typeId].increment();
-        _certified[typeId][to] = true;
     }
 
     function _burn(uint256 tokenId, uint256 typeId) private {
-        require(_exists(tokenId, typeId), "Nonexistent token");
+        require(_exists(tokenId, typeId), "ISkillCertificate: owner query for nonexistent token");
         emit CertificateBurned(_owners[typeId][tokenId], tokenId, typeId);
         _certified[typeId][_owners[typeId][tokenId]] = false;
         _owners[typeId][tokenId] = address(0);

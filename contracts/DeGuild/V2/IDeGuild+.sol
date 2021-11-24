@@ -12,17 +12,25 @@ pragma solidity ^0.8.0;
  *
  * When a job is reported, every process will be centralized!
  *
- * However, since anyone can report the job, you might get abused by 
- * malicious clone of this contract where owner take the job and report the job so
+ * However, since anyone can report the job, you might get abused by
+ * malicious clone of this contract where owner could take the job and report the job so
  * that the owner of this contract can steal the money.
  *
+ * Also, the owner of this contract can force cancel any job!
+ * That means malicious owner can take any job for free and freelancers would not know.
+ *
  * With trustable owner, this contract will be fine.
- * 
- * Use at your own risk!
+ * Though this is not really decentralized, but as long as client and taker
+ * follow the rules, they will not even need this report system.
+ *
+ * However, crimes on Dapps (even normal apps) are really hard to deal with.
+ * This contracts will guaranteed safety to the users in case of emergency.
+ *
+ * Use this contract at your own risk!
  *
  * The solution to this is to put the reported job to undergo by the judges, possilbly a DAO system can be helpful.
  * Another approach is using automated script to test the job submission.
- * 
+ *
  */
 interface IDeGuildPlus {
     /**
@@ -98,6 +106,11 @@ interface IDeGuildPlus {
     function jobURI(uint256 jobId) external view returns (string memory);
 
     /**
+     * @dev Returns the amount of `jobId` minted.
+     */
+    function jobsCount() external view returns (uint256);
+
+    /**
      * @dev Returns the acceptable token address.
      */
     function deguildCoin() external view returns (address);
@@ -112,17 +125,17 @@ interface IDeGuildPlus {
     function ownersOf(uint256 id) external view returns (address, address);
 
     /**
-     * @dev Returns the current job that `account` owned
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
+     * @dev Returns the current job that `account` is working on
      */
     function jobOf(address account) external view returns (uint256);
 
     /**
-     * @dev Returns true if `jobId` is purchasable for `taker`.
+     * @dev Returns true if `taker` is qualified to take `jobId`.
      *      Each job has its own conditions to purchase.
+     *
+     * Requirements:
+     *
+     * - `jobId` must exist.
      */
     function isQualified(uint256 jobId, address taker)
         external
@@ -130,24 +143,20 @@ interface IDeGuildPlus {
         returns (bool);
 
     /**
-     * @dev Returns the latest `jobId` minted.
-     */
-    function jobsCount() external view returns (uint256);
-
-    /**
-     * @dev Returns the information of the token type of `typeId`.
-     * [0] (uint256)    typeId
-     * [1] (uint256)    price of this `typeId` type
-     * [2] (address)    prerequisite of this `typeId` type
-     * [3] (bool)       lessonIncluded of this `typeId` type
-     * [4] (bool)       hasPrerequisite of this `typeId` type
-     * [5] (bool)       available of this `typeId` type
+     * @dev Returns the information of the job of `jobId`.
+     * [0] (uint256)        reward of this `jobId`
+     * [1] (address)        client of this `jobId`
+     * [2] (address)        taker of this `jobId`
+     * [3] (address[])      certificates of this `jobId`
+     * [4] (uint256[][])    skills (certificates' tokens) of this `jobId`
+     * [5] (uint8)          state of this `jobId`
+     * [6] (uint8)          difficulty of this `jobId`
      *
      * Requirements:
      *
-     * - `id` must exist.
+     * - `jobId` must exist.
      */
-    function jobInfo(uint256 typeId)
+    function jobInfo(uint256 jobId)
         external
         view
         returns (
@@ -160,70 +169,151 @@ interface IDeGuildPlus {
             uint8
         );
 
+    /**
+     * @dev Returns the result of verification of skills
+     * If true, then these skills exist and valid for qualifying job taker.
+     * Else, there are issues with these skills or certificate addresses
+     *
+     * Requirements:
+     *
+     * - `certificates` must support the interface of ISkillCertificatePlus (ERC165).
+     * - `skills` element cannot have more than 20 sub-elements (skills[0].length < 20).
+     * - `skills` length must be equal to `certificates`.
+     * - `certificates` array length must be less than 30.
+     */
     function verifySkills(
         address[] memory certificates,
         uint256[][] memory skills
     ) external view returns (bool);
 
     /**
-     * @dev Change `id` token state to 99 (Cancelled).
+     * @dev Change the `id` job's state to 99 (Cancelled), free the job taker and burn.
      *
-     * Usage : Neutralize the job if something fishy occurred with the owner.
-     * Emits a {StateChanged} event.
+     * Usage : Neutralize the job that violates rules and regulations and burn it.
      *
      * Requirements:
      *
      * - `id` must exist.
      * - The caller must be the owner of deGuild.
+     * - `id` state must not be 99 or 3 (neither cancelled or completed).
+     * - This contract has enough money to return all the reward of `id`.
      */
     function forceCancel(uint256 id) external returns (bool);
 
-    function cancel(uint256 id) external returns (bool);
-
     /**
-     * @dev Change `id` token state to 2 (Consumed).
+     * @dev Change the `id` job's state to 99 (Cancelled) and burn.
      *
-     * Usage : Unlock a key from certificate manager to take examination
-     * Emits a {StateChanged} event.
+     * Usage : Neutralize the job and burn it.
      *
      * Requirements:
      *
      * - `id` must exist.
-     * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of job, we also reject this call.
-     * - If the job is not fresh, reject it.
+     * - The caller must be the client.
+     * - `id` state must be 1 (available).
+     * - This contract has enough money to return all the reward of `id`.
+     */
+    function cancel(uint256 id) external returns (bool);
+
+    /**
+     * @dev Change the `id` job's state to 2 (taken) and
+     * set current of of caller to `id`.
+     *
+     * Usage : Take the job and start working!
+     * Emits a {JobTaken} event.
+     *
+     * Requirements:
+     *
+     * - The caller must not be banned.
+     * - `id` must exist.
+     * - The caller cannot be the job's client.
+     * - The caller must pass the qualification (might take longer if the number of skills is large).
+     * - The caller must not have any job ongoing.
+     * - `id` state must be 1 (available).
+     * - If the job is assigned, the taker must be the same as the caller
      */
     function take(uint256 id) external returns (bool);
 
     /**
-     * @dev Change `id` token state to 0 (Burned) and transfer ownership to address(0).
+     * @dev Change `id` token state to 3 (Completed) 
+     * and transfer rewards to the taker with 2% fee deducted.
      *
-     * Usage : Burn the token
+     * Usage : Complete the job and give the reward the taker
      * Emits a {StateChanged} event.
      *
      * Requirements:
      *
      * - `id` must exist.
-     * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of job, we also reject this call.
-     * - If the job is not fresh, reject it.
+     * - `id` state must be 2 (available).
+     * - The caller must be the job's client.
+     * - This contract must have enough fund to transfer fees.
+     * - This contract must have enough fund to transfer rewards.
      */
     function complete(uint256 id) external returns (bool);
 
-    function report(uint256 id) external returns (bool);
-
-    function judge(uint256 id, bool decision) external returns (bool);
-
     /**
-     * @dev Mint a type job.
+     * @dev Change `id` token state to 0 (Investigating).
      *
-     * Usage : Add a magic job
-     * Emits a {jobAdded} event.
+     * Usage : Set a flag for the owner of this contract 
+     * to take care of malicious events
+     * Emits a {JobCaseOpened} event.
+     *
+     * Notes : This is very centralized. Please read the header for more info.
      *
      * Requirements:
      *
-     * - `job` type must be purchasable.
-     * - The caller must be the owner of the shop.
+     * - `id` must exist.
+     * - `id` state must be 2 (available).
+     * - The caller must be the job's client or taker.
+     */
+    function report(uint256 id) external returns (bool);
+
+    /**
+     * @dev Change `id` token state to 3 (Completed), free the job taker and ban the criminal.
+     *
+     * Usage : Complete the job and judge the ongoing case
+     * setting `decision` to true will ban the taker
+     * else, we ban the client
+     * Emits a {JobCaseClosed} event.
+     *
+     * Notes : Banned clients can still download the job submission.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - `id` state must be 0 (investigating).     
+     * - the caller must be the owner of this contract
+     * - This contract must have enough fund to transfer fees.
+     * - This contract must have enough fund to transfer rewards.
+     */
+    function judge(uint256 id, bool decision) external returns (bool);
+
+    /**
+     * @dev Add a job to the job list.
+     *
+     * Usage : `bonus` is the bonus added to reward
+     *          if taker is not address(0), it will be assigned to the taker.
+     *          difficulty is used to calculate reward, it is used to calculate
+     *          freelancers level later.
+     *          Skills and certificate addresses are used to verify taker
+     *
+     * Emits a {jobAdded} event.
+     *
+     * Notes : Morally, difficulty is based on client feeling.
+     *         It is important to give the wage fairly based on the job difficulty.
+     *         Say we based on the level of education...
+     *         - level 0 is for beginners (< 3 months exp)
+     *         - level 1-2 is for intermediate (< 1 year exp)
+     *         - level 3-4 is for experts (2+ year exp)
+     *         - level 5+ is for pros (5+ year exp)
+     *         Job taker is more likely attract to reward, so adding bonus will surely
+     *         attract high-level job taker.
+     *
+     * Requirements:
+     *
+     * - The caller must not be banned.
+     * - The caller cannot set taker to be the caller.
+     * - The skills must pass the verification (might take longer if the number of skills is large).
+     * - This caller must have enough fund to transfer rewards.
      */
     function addJob(
         uint256 bonus,

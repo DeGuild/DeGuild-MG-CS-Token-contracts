@@ -426,7 +426,12 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
      * - If the certificate manager do not accept this type of scroll, we also reject this call.
      * - If the scroll is not fresh, reject it.
      */
-    function consume(uint256 id, string memory data) external virtual override returns (bool) {
+    function consume(uint256 id, string memory data)
+        external
+        virtual
+        override
+        returns (bool)
+    {
         _consume(id, data);
         return true;
     }
@@ -627,23 +632,10 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     function _consume(uint256 id, string memory data) internal virtual {
-        uint256 scrollType = _scrollCreated[id].scrollID;
-
         require(_exists(id), "Nonexistent token");
         require(
-            isCertificateManager(_msgSender()),
-            "You are not the certificate manager, consuming is reserved for the claiming exam key only."
-        );
-        require(
-            _msgSender().supportsInterface(
-                type(ISkillCertificatePlus).interfaceId
-            ),
-            "Address is not supported"
-        );
-        require(
-            ISkillCertificatePlus(_msgSender()).typeAccepted(scrollType) ==
-                scrollType,
-            "Wrong type of scroll to be consumed."
+            _owners[tracker.current()] == _msgSender(),
+            "Must be consumed by the owner"
         );
         require(
             _scrollCreated[id].state == 1,

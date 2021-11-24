@@ -104,4 +104,21 @@ interface ISkillCertificatePlus {
         uint256 scrollOwnedID,
         uint256 typeId
     ) external returns (bool);
+
+    /**
+     * @dev Mind a token to `to` (Also, give the certification and burn `scrollOwnedID` in the shop).
+     *
+     * Usage : Mint the certificate.
+     * Emits a {CertificateMinted} event.
+     *
+     * Requirements:
+     *
+     * - `to` must the owner of `scrollOwnedID`.
+     * - `scrollOwnedID` must be burned.
+     */
+    function batchMint(
+        address[] memory to,
+        uint256[] memory scrollOwnedID,
+        uint256 typeId
+    ) external returns (bool);
 }

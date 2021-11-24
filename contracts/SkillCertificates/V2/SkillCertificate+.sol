@@ -218,6 +218,27 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
         return true;
     }
 
+    /**
+     * @dev See {ISkillCertificate-mint}.
+     *
+     * Requirements:
+     *
+     * - `to` must the owner of `scrollOwnedID`.
+     * - `scrollOwnedID` must be burned.
+     */
+    function batchMint(
+        address[] memory to,
+        uint256[] memory scrollOwnedID,
+        uint256 typeId
+    ) external virtual override onlyOwner returns (bool) {
+        require(to.length < 1000, "Too many addresses");
+        require(to.length == scrollOwnedID.length, "array sizes not matched");
+        for (uint256 index = 0; index < to.length; index++) {
+            _mint(to[index], scrollOwnedID[index], typeId);
+        }
+        return true;
+    }
+
     function _exists(uint256 tokenId, uint256 typeId)
         private
         view

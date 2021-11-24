@@ -3,14 +3,14 @@ pragma solidity ^0.8.0;
 
 /**
  * NFT style interface, but it does not allow transfer like other ERC721 and ERC1155
- * It requires DGT & SkillCertificate to work around with. Basically, we try to make a shop out of it!
- * As the first version, here are the list of functions, events, and structs we used.
+ * It requires DGT & ISkillCertificatePlus to work around with. Basically, we try to make a shop out of it!
  */
-interface IMagicScrolls {
+interface IMagicScrollsPlus {
     /**
      * @dev This data type is used to store the data of a magic scroll.
      * scrollID         (uint256) is the unique type of that scroll.
      * price            (uint256) is the price of that scroll.
+     * certificateId    (uint256) is the id of the certificate token required.
      * prerequisite     (address) is the address of the certificate manager (any address is fine, if it has no prerequisite).
      * state            (uint8)   is the state of the scroll (Consumed or cancelled or fresh).
      * lessonIncluded   (bool)    is the state telling that this scroll can be used for unlocking learning materials off-chain.
@@ -21,6 +21,7 @@ interface IMagicScrolls {
     struct MagicScroll {
         uint256 scrollID;
         uint256 price;
+        uint256 certificateId;
         address prerequisite;
         uint8 state;
         bool lessonIncluded;
@@ -29,29 +30,31 @@ interface IMagicScrolls {
     }
 
     /**
-     * @dev Emitted when `scrollId` make changes to its state, changing to `scrollState`.
+     * @dev Emitted when `scrollId` is consumed to show the `passcode`.
      */
-    event StateChanged(uint256 scrollId, uint8 scrollState);
+    event ScrollConsumed(uint256 scrollId, bytes32 indexed passcode);
 
     /**
-     * @dev Emitted when `scrollId` is minted based from scroll of type `scrollType`.
+     * @dev Emitted when `scrollId` is burned by `certificateManager`.
      */
-    event ScrollBought(uint256 scrollId, uint256 scrollType);
+    event ScrollBurned(uint256 scrollId, address indexed certificateManager);
+
+    /**
+     * @dev Emitted when `scrollId` is minted based from scroll of type `scrollType` by `buyer`.
+     */
+    event ScrollBought(
+        uint256 scrollId,
+        uint256 indexed scrollType,
+        address indexed buyer
+    );
 
     /**
      * @dev Emitted when a new scroll is added, giving that scroll of type `scrollId` is ready to be minted.
      */
-    event ScrollAdded(
-        uint256 scrollID,
-        uint256 price,
-        address indexed prerequisite,
-        bool lessonIncluded,
-        bool hasPrerequisite,
-        bool available
-    );
+    event ScrollAdded(uint256 indexed scrollType);
 
     /**
-     * @dev Emitted when `account` gained or lost permission to be a certificate manager.
+     * @dev Emitted when `account` gained or lost permission to be a certificate manager (`status`).
      */
     event ApprovalForCM(address indexed account, bool status);
 
@@ -75,13 +78,13 @@ interface IMagicScrolls {
     function tokenURI(uint256 tokenId) external view returns (string memory);
 
     /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token type.
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenTypeId` token type.
      *
      * Requirements:
      *
-     * - `tokenId` cannot be non-existence token.
+     * - `tokenTypeId` cannot be non-existence token.
      */
-    function tokenTypeURI(uint256 tokenId)
+    function tokenTypeURI(uint256 tokenTypeId)
         external
         view
         returns (string memory);
@@ -119,10 +122,6 @@ interface IMagicScrolls {
 
     /**
      * @dev Returns the balance that `account` owned, according to types.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
      */
     function balanceOfAll(address account)
         external
@@ -150,6 +149,13 @@ interface IMagicScrolls {
     /**
      * @dev Returns true if `scrollType` is purchasable for `buyer`.
      *      Each scroll has its own conditions to purchase.
+     *
+     * Requirements:
+     *
+     * - `scrollType` must exist.
+     * - `scrollType` must be available.
+     * -  If it has a prerequisite, `scrollType`'s prerequisite must
+     *    supports ISkillCertificatePlus interface (ERC165).
      */
     function isPurchasableScroll(uint256 scrollType, address buyer)
         external
@@ -165,10 +171,11 @@ interface IMagicScrolls {
      * @dev Returns the information of the token type of `typeId`.
      * [0] (uint256)    typeId
      * [1] (uint256)    price of this `typeId` type
-     * [2] (address)    prerequisite of this `typeId` type
-     * [3] (bool)       lessonIncluded of this `typeId` type
-     * [4] (bool)       hasPrerequisite of this `typeId` type
-     * [5] (bool)       available of this `typeId` type
+     * [2] (uint256)    certificate token ID of this `typeId` type
+     * [3] (address)    prerequisite of this `typeId` type
+     * [4] (bool)       lessonIncluded of this `typeId` type
+     * [5] (bool)       hasPrerequisite of this `typeId` type
+     * [6] (bool)       available of this `typeId` type
      *
      * Requirements:
      *
@@ -180,6 +187,7 @@ interface IMagicScrolls {
         returns (
             uint256,
             uint256,
+            uint256,
             address,
             bool,
             bool,
@@ -189,11 +197,14 @@ interface IMagicScrolls {
     /**
      * @dev Returns the information of the token type of `tokenId`.
      * [0] (uint256)    tokenId
-     * [1] (uint256)    scrollID of this `tokenId`.
-     * [2] (uint256)    price of this `tokenId`.
-     * [3] (address)    prerequisite of this `tokenId`.
-     * [4] (bool)       lessonIncluded of this `tokenId`.
-     * [5] (bool)       hasPrerequisite of this `tokenId`.
+     * [1] (uint256)    typeId/scrollID of this `tokenId`
+     * [2] (uint256)    price of this `tokenId`
+     * [3] (uint256)    certificate token ID of this `tokenId`
+     * [4] (address)    prerequisite of this `tokenId`
+     * [5] (bool)       lessonIncluded of this `tokenId`
+     * [6] (bool)       hasPrerequisite of this `tokenId`
+     * [7] (bool)       available of this `tokenId`
+     *
      * Requirements:
      *
      * - `id` must exist.
@@ -202,6 +213,7 @@ interface IMagicScrolls {
         external
         view
         returns (
+            uint256,
             uint256,
             uint256,
             uint256,
@@ -214,7 +226,6 @@ interface IMagicScrolls {
      * @dev Change `id` token state to 99 (Cancelled).
      *
      * Usage : Neutralize the scroll if something fishy occurred with the owner.
-     * Emits a {StateChanged} event.
      *
      * Requirements:
      *
@@ -227,29 +238,29 @@ interface IMagicScrolls {
      * @dev Change `id` token state to 2 (Consumed).
      *
      * Usage : Unlock a key from certificate manager to take examination
-     * Emits a {StateChanged} event.
+     * Emits a {ScrollConsumed} event.
+     *
+     * Note : The passcode from the event is used for batch transfer
      *
      * Requirements:
      *
      * - `id` must exist.
-     * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of scroll, we also reject this call.
-     * - If the scroll is not fresh, reject it.
+     * - The caller must be the owner.
+     * - The scroll state must be 1 (minted).
      */
-    function consume(uint256 id) external returns (bool);
+    function consume(uint256 id, string memory data) external returns (bool);
 
     /**
-     * @dev Change `id` token state to 0 (Burned) and transfer ownership to address(0).
+     * @dev Change `id` token state to 0 (Burned) and burn `id`.
      *
-     * Usage : Burn the token
-     * Emits a {StateChanged} event.
+     * Usage : Burn the token, must be used by the certificate manager
+     * Emits a {ScrollBurned} event.
      *
      * Requirements:
      *
      * - `id` must exist.
-     * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of scroll, we also reject this call.
-     * - If the scroll is not fresh, reject it.
+     * - The caller must be a certificate manager (ERC165 & Approved).
+     * - The scroll state must be 1 (minted) or 2 (consumed).
      */
     function burn(uint256 id) external returns (bool);
 
@@ -278,6 +289,7 @@ interface IMagicScrolls {
      * - The caller must be the owner of the shop.
      */
     function addScroll(
+        uint256 certificateId,
         address prerequisite,
         bool lessonIncluded,
         bool hasPrerequisite,

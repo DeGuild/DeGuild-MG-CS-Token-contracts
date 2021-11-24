@@ -131,6 +131,10 @@ interface IMagicScrollsPlus {
     /**
      * @dev Returns the balance that `account` owned, according to ownership of
      * minted scrolls.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
      */
     function balanceUserOwned(address account)
         external

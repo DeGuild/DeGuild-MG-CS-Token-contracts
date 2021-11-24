@@ -83,21 +83,21 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-name}.
+     * @dev See {IMagicScrollsPlus-name}.
      */
     function name() external view virtual override returns (string memory) {
         return _name;
     }
 
     /**
-     * @dev See {IMagicScrolls-symbol}.
+     * @dev See {IMagicScrollsPlus-symbol}.
      */
     function symbol() external view virtual override returns (string memory) {
         return _symbol;
     }
 
     /**
-     * @dev See {IMagicScrolls-tokenURI}.
+     * @dev See {IMagicScrollsPlus-tokenURI}.
      *
      * Requirements:
      *
@@ -112,7 +112,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     {
         require(
             _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
+            "IMagicScrollsPlus: URI query for nonexistent scroll"
         );
 
         uint256 tokenType = _scrollCreated[tokenId].scrollID;
@@ -120,7 +120,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-tokenURI}.
+     * @dev See {IMagicScrollsPlus-tokenURI}.
      *
      * Requirements:
      *
@@ -135,7 +135,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     {
         require(
             _existsType(tokenTypeId),
-            "ERC721Metadata: URI query for nonexistent token"
+            "IMagicScrollsPlus: URI query for nonexistent scroll type"
         );
 
         string memory baseURI = _baseURI();
@@ -152,7 +152,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-numberOfScrollTypes}.
+     * @dev See {IMagicScrollsPlus-numberOfScrollTypes}.
      */
     function numberOfScrollTypes()
         external
@@ -165,14 +165,14 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-deguildCoin}.
+     * @dev See {IMagicScrollsPlus-deguildCoin}.
      */
     function deguildCoin() external view virtual override returns (address) {
         return _addressDGT;
     }
 
     /**
-     * @dev See {IMagicScrolls-ownerOf}.
+     * @dev See {IMagicScrollsPlus-ownerOf}.
      *
      * Requirements:
      *
@@ -188,13 +188,17 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         address owner = _owners[id];
         require(
             owner != address(0),
-            "ERC721: owner query for nonexistent token"
+            "IMagicScrollsPlus: owner query for nonexistent token"
         );
         return owner;
     }
 
     /**
-     * @dev See {IMagicScrolls-balanceOfOne}.
+     * @dev See {IMagicScrollsPlus-balanceOfOne}.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
      */
     function balanceOfOne(address account, uint256 id)
         public
@@ -205,13 +209,13 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     {
         require(
             account != address(0),
-            "ERC1155: balance query for the zero address"
+            "IMagicScrollsPlus: balance query for the zero address"
         );
         return _balances[id][account];
     }
 
     /**
-     * @dev See {IMagicScrolls-balanceOfAll}.
+     * @dev See {IMagicScrollsPlus-balanceOfAll}.
      */
     function balanceOfAll(address account)
         public
@@ -230,7 +234,11 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-balanceUserOwned}.
+     * @dev See {IMagicScrollsPlus-balanceUserOwned}.
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
      */
     function balanceUserOwned(address account)
         public
@@ -239,6 +247,10 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         override
         returns (uint256[] memory)
     {
+        require(
+            account != address(0),
+            "IMagicScrollsPlus: balance query for the zero address"
+        );
         uint256 balances = 0;
 
         for (uint256 i = 0; i < tracker.current(); i++) {
@@ -258,7 +270,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-isCertificateManager}.
+     * @dev See {IMagicScrollsPlus-isCertificateManager}.
      */
     function isCertificateManager(address manager)
         public
@@ -271,7 +283,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-isPurchasableScroll}.
+     * @dev See {IMagicScrollsPlus-isPurchasableScroll}.
      *
      * Requirements:
      *
@@ -287,10 +299,10 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         override
         returns (bool)
     {
-        require(_existsType(scrollType), "Scroll does not exist.");
+        require(_existsType(scrollType), "IMagicScrollsPlus: scroll does not exist.");
         require(
             _scrollTypes[scrollType].available,
-            "This scroll type is no longer purchasable"
+            "IMagicScrollsPlus: this scroll type is no longer purchasable"
         );
 
         if (!_scrollTypes[scrollType].hasPrerequisite) {
@@ -300,7 +312,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
                 _scrollTypes[scrollType].prerequisite.supportsInterface(
                     type(ISkillCertificatePlus).interfaceId
                 ),
-                "Address is not supported"
+                "IMagicScrollsPlus: ISkillCertificatePlus is not supported by this address"
             );
             return
                 ISkillCertificatePlus(_scrollTypes[scrollType].prerequisite)
@@ -309,7 +321,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-scrollTypes}.
+     * @dev See {IMagicScrollsPlus-scrollTypes}.
      */
     function scrollTypes()
         public
@@ -337,7 +349,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-scrollTypeInfo}.
+     * @dev See {IMagicScrollsPlus-scrollTypeInfo}.
      *
      * Requirements:
      *
@@ -358,7 +370,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             bool
         )
     {
-        require(_existsType(typeId), "This scroll type does not exist");
+        require(_existsType(typeId), "IMagicScrollsPlus: this scroll type does not exist");
         MagicScroll memory scroll = _scrollTypes[typeId];
         return (
             typeId,
@@ -372,7 +384,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-scrollInfo}.
+     * @dev See {IMagicScrollsPlus-scrollInfo}.
      *
      * Requirements:
      *
@@ -393,7 +405,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             bool
         )
     {
-        require(_exists(tokenId), "This scroll does not exist");
+        require(_exists(tokenId), "IMagicScrollsPlus: this scroll does not exist");
         MagicScroll memory scroll = _scrollCreated[tokenId];
         return (
             tokenId,
@@ -407,7 +419,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-forceCancel}.
+     * @dev See {IMagicScrollsPlus-forceCancel}.
      *
      * Requirements:
      *
@@ -420,7 +432,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-consume}.
+     * @dev See {IMagicScrollsPlus-consume}.
      *
      * Requirements:
      *
@@ -439,7 +451,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-burn}.
+     * @dev See {IMagicScrollsPlus-burn}.
      *
      * Requirements:
      *
@@ -453,7 +465,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-buyScroll}.
+     * @dev See {IMagicScrollsPlus-buyScroll}.
      *
      * Requirements:
      *
@@ -471,7 +483,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-addScroll}.
+     * @dev See {IMagicScrollsPlus-addScroll}.
      *
      * Requirements:
      *
@@ -496,7 +508,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-setCertificateManager}.
+     * @dev See {IMagicScrollsPlus-setCertificateManager}.
      *
      * Requirements:
      *
@@ -515,7 +527,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     /**
-     * @dev See {IMagicScrolls-sealScroll}.
+     * @dev See {IMagicScrollsPlus-sealScroll}.
      *
      * Requirements:
      *
@@ -555,7 +567,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     function _sealScroll(uint256 scrollType) private returns (bool) {
-        require(_existsType(scrollType), "This scroll type does not exist");
+        require(_existsType(scrollType), "IMagicScrollsPlus: this scroll type does not exist");
 
         _scrollTypes[scrollType].available = false;
         return true;
@@ -568,7 +580,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     function _existsType(uint256 tokenId) private view returns (bool) {
         require(
             variations.current() > tokenId,
-            "There are not that many types of scroll"
+            "IMagicScrollsPlus: there are not that many types of scroll"
         );
         return _scrollTypes[tokenId].available;
     }
@@ -586,7 +598,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         // check for validity to buy from interface for certificate
         require(
             isPurchasableScroll(scrollType, _msgSender()),
-            "This scroll is not purchasable."
+            "IMagicScrollsPlus: this scroll is not purchasable."
         );
         require(
             _DGT.transferFrom(
@@ -594,7 +606,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
                 owner(),
                 _scrollTypes[scrollType].price
             ),
-            "Cannot transfer DGC, approve the contract or buy more DGC!"
+            "IMagicScrollsPlus: cannot transfer DGT"
         );
         _scrollCreated[tracker.current()] = _scrollTypes[scrollType];
         _owners[tracker.current()] = _msgSender();
@@ -605,20 +617,20 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     function _burn(uint256 id) private {
-        require(_exists(id), "Nonexistent token");
+        require(_exists(id), "IMagicScrollsPlus: owner query fo nonexistent token");
         require(
             _msgSender().supportsInterface(
                 type(ISkillCertificatePlus).interfaceId
             ),
-            "Address is not supported"
+            "IMagicScrollsPlus: ISkillCertificatePlus is not supported by caller"
         );
         require(
             isCertificateManager(_msgSender()),
-            "You are not the certificate manager, burning is reserved for the claiming certificate only."
+            "IMagicScrollsPlus: caller is not the approved certificate manager."
         );
         require(
             _scrollCreated[id].state == 1 || _scrollCreated[id].state == 2,
-            "This scroll is no longer burnable."
+            "IMagicScrollsPlus: this scroll is no longer burnable."
         );
         _balances[_scrollCreated[id].scrollID][ownerOf(id)]--;
         _scrollCreated[id].state = 0; //consumed state id
@@ -627,20 +639,20 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     }
 
     function _forceCancel(uint256 id) private onlyOwner {
-        require(_exists(id), "Nonexistent token");
+        require(_exists(id), "IMagicScrollsPlus: owner query for nonexistent token");
         _scrollCreated[id].state = 99; //Cancelled state id
         _owners[id] = address(0);
     }
 
     function _consume(uint256 id, string memory data) internal virtual {
-        require(_exists(id), "Nonexistent token");
+        require(_exists(id), "IMagicScrollsPlus: owner query for nonexistent token");
         require(
             _owners[tracker.current()] == _msgSender(),
-            "Must be consumed by the owner"
+            "IMagicScrollsPlus: must be consumed by the owner"
         );
         require(
             _scrollCreated[id].state == 1,
-            "This scroll is no longer consumable."
+            "IMagicScrollsPlus: this scroll is no longer consumable."
         );
         _scrollCreated[id].state = 2; //consumed state id
         emit ScrollConsumed(id, keccak256(abi.encodePacked(data)));

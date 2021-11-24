@@ -171,6 +171,13 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
                 : "";
     }
 
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     *
+     * Requirements:
+     *
+     * - `tokenId` cannot be non-existence token.
+     */
     function addCertificate(uint256 scrollTypeId)
         public
         virtual
@@ -252,6 +259,14 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
     }
 
     function _addCertificate(uint256 scrollTypeId) private {
+        require(
+            _addressShop.supportsInterface(type(IMagicScrollsPlus).interfaceId),
+            "Address is not supported"
+        );
+        require(
+            IMagicScrollsPlus(_addressShop).numberOfScrollTypes() > scrollTypeId,
+            "The shop does not have that many scroll types"
+        );
         _scrollType[_typeTracker.current()] = scrollTypeId;
         _trackers[_typeTracker.current()] = Counters.Counter(0);
         _typeTracker.increment();
@@ -290,11 +305,10 @@ contract SkillCertificatePlus is Context, Ownable, ISkillCertificatePlus {
             IMagicScrollsPlus(_addressShop).burn(scrollOwnedID),
             "Cannot burn the scroll!"
         );
-
+        _certified[typeId][to] = true;
         _owners[typeId][_trackers[typeId].current()] = to;
         emit CertificateMinted(to, _trackers[typeId].current(), typeId);
         _trackers[typeId].increment();
-        _certified[typeId][to] = true;
     }
 
     function _burn(uint256 tokenId, uint256 typeId) private {

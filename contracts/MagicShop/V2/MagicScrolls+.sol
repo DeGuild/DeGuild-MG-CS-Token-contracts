@@ -276,6 +276,13 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
 
     /**
      * @dev See {IMagicScrolls-isPurchasableScroll}.
+     *
+     * Requirements:
+     *
+     * - `scrollType` must exist.
+     * - `scrollType` must be available.
+     * -  If it has a prerequisite, `scrollType`'s prerequisite must
+     *    supports ISkillCertificatePlus interface (ERC165).
      */
     function isPurchasableScroll(uint256 scrollType, address buyer)
         public

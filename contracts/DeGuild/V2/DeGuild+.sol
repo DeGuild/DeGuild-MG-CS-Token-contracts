@@ -108,7 +108,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     {
         require(
             _exists(jobId),
-            "ERC721Metadata: URI query for nonexistent token"
+            "IDeGuildPlus: URI query for nonexistent job"
         );
 
         string memory baseURI = _baseURI();
@@ -152,7 +152,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         override
         returns (address, address)
     {
-        require(_exists(jobId), "ERC721: owner query for nonexistent token");
+        require(_exists(jobId), "IDeGuildPlus: owner query for nonexistent job");
         return (_JobsCreated[jobId].client, _JobsCreated[jobId].taker);
     }
 
@@ -183,7 +183,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         override
         returns (bool)
     {
-        require(_exists(jobId), "ERC721: owner query for nonexistent token");
+        require(_exists(jobId), "IDeGuildPlus: owner query for nonexistent job");
 
         address[] memory certificates = _JobsCreated[jobId].certificates;
         uint256[][] memory skills = _JobsCreated[jobId].skills;
@@ -227,7 +227,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             uint8
         )
     {
-        require(_exists(jobId), "ERC721: owner query for nonexistent token");
+        require(_exists(jobId), "IDeGuildPlus: owner query for nonexistent job");
 
         Job memory info = _JobsCreated[jobId];
         return (
@@ -257,12 +257,12 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     ) public view virtual override returns (bool) {
         require(
             certificates.length < 30,
-            "Please keep your requirement certificates addresses under 30 address"
+            "IDeGuildPlus: requirement certificate addresses larger than 30 address"
         );
 
         require(
             skills.length == certificates.length,
-            "Sizes of skills array and certificates array are not equal"
+            "IDeGuildPlus: sizes of skill array and certificate array are not equal"
         );
 
         for (uint256 i = 0; i < certificates.length; i++) {
@@ -274,7 +274,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             ) {
                 return false;
             }
-            require(skills[i].length < 20, "Too many skills required");
+            require(skills[i].length < 20, "IDeGuildPlus: more than 20 skills required for one certificate address");
             for (uint256 j = 0; j < skills[i].length; j++) {
                 if (
                     skills[i][j] >=
@@ -304,14 +304,14 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         onlyOwner
         returns (bool)
     {
-        require(_exists(id), "ERC721: owner query for nonexistent token");
+        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
         require(
             _JobsCreated[id].state != 99 && _JobsCreated[id].state != 3,
-            "Already cancelled or completed"
+            "IDeGuildPlus: job is already cancelled or completed"
         );
         require(
             _DGT.transfer(_owners[id], _JobsCreated[id].reward),
-            "Not enough fund"
+            "IDeGuildPlus: not enough fund to return reward"
         );
 
         _JobsCreated[id].state = 99;
@@ -332,15 +332,15 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      * - This contract has enough money to return all the reward of `id`.
      */
     function cancel(uint256 id) public virtual override returns (bool) {
-        require(_exists(id), "ERC721: owner query for nonexistent token");
+        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
         require(
             _JobsCreated[id].client == _msgSender(),
-            "Only client can cancel this job!"
+            "IDeGuildPlus: only client can cancel this job"
         );
-        require(_JobsCreated[id].state == 1, "This job is already taken!");
+        require(_JobsCreated[id].state == 1, "IDeGuildPlus: this job is already taken");
         require(
             _DGT.transfer(_owners[id], _JobsCreated[id].reward),
-            "Not enough fund"
+            "IDeGuildPlus: not enough fund"
         );
 
         _JobsCreated[id].state = 99;
@@ -363,23 +363,23 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      * - If the job is assigned, the taker must be the same as the caller
      */
     function take(uint256 id) public virtual override returns (bool) {
-        require(!_banned[_msgSender()], "You have been banned");
+        require(!_banned[_msgSender()], "IDeGuildPlus: caller has been banned");
 
-        require(_exists(id), "ERC721: owner query for nonexistent token");
+        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
         require(
             _msgSender() != _JobsCreated[id].client,
-            "Abusing job taking is not allowed!"
+            "IDeGuildPlus: caller cannot be client"
         );
-        require(isQualified(id, _msgSender()), "You are not qualified!");
-        require(_currentJob[_msgSender()] == 0, "You are already occupied!");
+        require(isQualified(id, _msgSender()), "IDeGuildPlus: caller is not qualified");
+        require(_currentJob[_msgSender()] == 0, "IDeGuildPlus: caller is already occupied");
         require(
             _JobsCreated[id].state == 1,
-            "This job is not availble to be taken!"
+            "IDeGuildPlus: this job is not availble to be taken"
         );
         if (_JobsCreated[id].assigned) {
             require(
                 _JobsCreated[id].taker == _msgSender(),
-                "Assigned person is not you"
+                "IDeGuildPlus: assigned address is not the caller"
             );
         } else {
             _JobsCreated[id].taker = _msgSender();
@@ -404,18 +404,18 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      * - This contract must have enough fund to transfer rewards.
      */
     function complete(uint256 id) public virtual override returns (bool) {
-        require(_exists(id), "ERC721: owner query for nonexistent token");
+        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
         require(
             _JobsCreated[id].state == 2,
-            "This job is not availble to be completed!"
+            "IDeGuildPlus: this job is not availble to be completed"
         );
         require(
             _JobsCreated[id].client == _msgSender(),
-            "Only client can complete this job!"
+            "IDeGuildPlus: only client can complete this job"
         );
 
         uint256 fee = _JobsCreated[id].reward / 50;
-        require(_DGT.transfer(owner(), fee), "Not enough fund");
+        require(_DGT.transfer(owner(), fee), "IDeGuildPlus: not enough fund to transfer reward");
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
@@ -423,7 +423,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
 
         require(
             _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
-            "Not enough fund"
+            "IDeGuildPlus: not enough fund to transfer fees"
         );
 
         _JobsCreated[id].state = 3;
@@ -444,15 +444,15 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      * - The caller must be the job's client or taker.
      */
     function report(uint256 id) public virtual override returns (bool) {
-        require(_exists(id), "ERC721: owner query for nonexistent token");
+        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
         require(
             _JobsCreated[id].state == 2,
-            "This job is not availble to be reported!"
+            "IDeGuildPlus: this job is not availble to be reported"
         );
         require(
             _JobsCreated[id].client == _msgSender() ||
                 _JobsCreated[id].taker == _msgSender(),
-            "Only stakeholders can report this job!"
+            "IDeGuildPlus: only stakeholders can report this job"
         );
 
         _JobsCreated[id].state = 0;
@@ -478,10 +478,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         onlyOwner
         returns (bool)
     {
-        require(_exists(id), "ERC721: owner query for nonexistent token");
+        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
         require(
             _JobsCreated[id].state == 0,
-            "This job is not availble to be judged!"
+            "IDeGuildPlus: this job is not availble to be judged"
         );
 
         address winner;
@@ -495,14 +495,14 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         }
 
         uint256 fee = _JobsCreated[id].reward / 10;
-        require(_DGT.transfer(owner(), fee), "Not enough fund");
+        require(_DGT.transfer(owner(), fee), "IDeGuildPlus: not enough fund to transfer fee");
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
         }
         require(
             _DGT.transfer(winner, _JobsCreated[id].reward),
-            "Not enough fund"
+            "IDeGuildPlus: not enough fund to transfer reward"
         );
         _banned[loser] = true;
         _JobsCreated[id].state = 3;
@@ -529,12 +529,12 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         uint256[][] memory skills,
         uint8 difficulty
     ) public virtual override returns (bool) {
-        require(!_banned[_msgSender()], "You have been banned");
-        require(_msgSender() != taker, "Abusing job taking is not allowed!");
+        require(!_banned[_msgSender()], "IDeGuildPlus: caller has been banned");
+        require(_msgSender() != taker, "IDeGuildPlus: caller cannot assign this taker address to this job");
 
         require(
             verifySkills(certificates, skills),
-            "All skills must support our interface"
+            "IDeGuildPlus: all skills must support ISkillCertificatePlus interface"
         );
         uint256 wage;
         unchecked {
@@ -544,7 +544,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         }
         require(
             _DGT.transferFrom(_msgSender(), address(this), wage),
-            "Not enough fund"
+            "IDeGuildPlus: not enough fund to transfer reward"
         );
 
         _JobsCreated[tracker.current()] = Job({

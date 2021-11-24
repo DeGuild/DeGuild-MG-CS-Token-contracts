@@ -78,13 +78,13 @@ interface IMagicScrollsPlus {
     function tokenURI(uint256 tokenId) external view returns (string memory);
 
     /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token type.
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenTypeId` token type.
      *
      * Requirements:
      *
-     * - `tokenId` cannot be non-existence token.
+     * - `tokenTypeId` cannot be non-existence token.
      */
-    function tokenTypeURI(uint256 tokenId)
+    function tokenTypeURI(uint256 tokenTypeId)
         external
         view
         returns (string memory);
@@ -122,10 +122,6 @@ interface IMagicScrollsPlus {
 
     /**
      * @dev Returns the balance that `account` owned, according to types.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
      */
     function balanceOfAll(address account)
         external
@@ -135,10 +131,6 @@ interface IMagicScrollsPlus {
     /**
      * @dev Returns the balance that `account` owned, according to ownership of
      * minted scrolls.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
      */
     function balanceUserOwned(address account)
         external

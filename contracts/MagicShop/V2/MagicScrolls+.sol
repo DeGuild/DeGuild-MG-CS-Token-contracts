@@ -98,6 +98,10 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
 
     /**
      * @dev See {IMagicScrolls-tokenURI}.
+     *
+     * Requirements:
+     *
+     * - `tokenId` cannot be non-existence token.
      */
     function tokenURI(uint256 tokenId)
         public
@@ -117,8 +121,12 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
 
     /**
      * @dev See {IMagicScrolls-tokenURI}.
+     *
+     * Requirements:
+     *
+     * - `tokenTypeId` cannot be non-existence token.
      */
-    function tokenTypeURI(uint256 tokenId)
+    function tokenTypeURI(uint256 tokenTypeId)
         public
         view
         virtual
@@ -126,7 +134,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         returns (string memory)
     {
         require(
-            _existsType(tokenId),
+            _existsType(tokenTypeId),
             "ERC721Metadata: URI query for nonexistent token"
         );
 
@@ -137,7 +145,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
                 ? string(
                     abi.encodePacked(
                         abi.encodePacked(baseURI, address(this).getChecksum()),
-                        abi.encodePacked("/", tokenId.toString())
+                        abi.encodePacked("/", tokenTypeId.toString())
                     )
                 )
                 : "";
@@ -187,10 +195,6 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
 
     /**
      * @dev See {IMagicScrolls-balanceOfOne}.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
      */
     function balanceOfOne(address account, uint256 id)
         public
@@ -208,10 +212,6 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
 
     /**
      * @dev See {IMagicScrolls-balanceOfAll}.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
      */
     function balanceOfAll(address account)
         public
@@ -231,10 +231,6 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
 
     /**
      * @dev See {IMagicScrolls-balanceUserOwned}.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
      */
     function balanceUserOwned(address account)
         public

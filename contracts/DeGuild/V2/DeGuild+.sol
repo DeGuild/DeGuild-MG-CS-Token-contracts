@@ -30,6 +30,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      */
     mapping(uint256 => address) private _owners;
     mapping(address => uint256) private _currentJob;
+    mapping(address => bool) private _banned;
 
     /**
      * @dev This mapping store all scrolls.
@@ -252,6 +253,8 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     }
 
     function take(uint256 id) public virtual override returns (bool) {
+        require(!_banned[_msgSender()], "You have been banned");
+
         require(_exists(id), "ERC721: owner query for nonexistent token");
         require(
             _msgSender() != _JobsCreated[id].client,
@@ -290,13 +293,22 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "Only client can complete this job!"
         );
 
+        uint256 fee = _JobsCreated[id].reward / 50;
+        require(_DGT.transfer(owner(), fee), "Not enough fund");
+
+        unchecked {
+            _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
+        }
+        
         require(
             _DGT.transfer(_JobsCreated[id].taker, _JobsCreated[id].reward),
             "Not enough fund"
         );
 
+
         _JobsCreated[id].state = 3;
         _currentJob[_JobsCreated[id].taker] = 0;
+
 
         emit JobCompleted(id, _JobsCreated[id].taker);
 
@@ -315,12 +327,6 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "Only stakeholders can report this job!"
         );
 
-        uint256 fee = _JobsCreated[id].reward / 10;
-        require(_DGT.transfer(owner(), fee), "Not enough fund");
-
-        unchecked {
-            _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
-        }
         _JobsCreated[id].state = 0;
         emit JobCaseOpened(id);
 
@@ -350,10 +356,17 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             loser = _JobsCreated[id].client;
         }
 
+        uint256 fee = _JobsCreated[id].reward / 10;
+        require(_DGT.transfer(owner(), fee), "Not enough fund");
+
+        unchecked {
+            _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
+        }
         require(
             _DGT.transfer(winner, _JobsCreated[id].reward),
             "Not enough fund"
         );
+        _banned[loser] = true;
         _JobsCreated[id].state = 3;
         _currentJob[_JobsCreated[id].taker] = 0;
         emit JobCaseClosed(id, loser);
@@ -394,6 +407,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         uint256[][] memory skills,
         uint8 difficulty
     ) public virtual override returns (bool) {
+        require(!_banned[_msgSender()], "You have been banned");
         require(_msgSender() != taker, "Abusing job taking is not allowed!");
 
         require(

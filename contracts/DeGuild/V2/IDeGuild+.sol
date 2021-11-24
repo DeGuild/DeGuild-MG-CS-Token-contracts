@@ -2,23 +2,42 @@
 pragma solidity ^0.8.0;
 
 /**
+ *
  * NFT style interface, but it does not allow transfer like other ERC721 and ERC1155
- * It requires DGT & SkillCertificate to work around with. Basically, we try to make a shop out of it!
- * As the first version, here are the list of functions, events, and structs we used.
+ * It requires DGT & SkillCertificate to work around with.
+ * This contract will lock the payment of the client and taker until the client is satisfied.
+ *
+ * However, there is a report system that will prevent malicious intents between taker and client.
+ * The owner of this contract has no power until the job is reported!
+ *
+ * When a job is reported, every process will be centralized!
+ *
+ * However, since anyone can report the job, you might get abused by 
+ * malicious clone of this contract where owner take the job and report the job so
+ * that the owner of this contract can steal the money.
+ *
+ * With trustable owner, this contract will be fine.
+ * 
+ * Use at your own risk!
+ *
+ * The solution to this is to put the reported job to undergo by the judges, possilbly a DAO system can be helpful.
+ * Another approach is using automated script to test the job submission.
+ * 
  */
 interface IDeGuildPlus {
     /**
      * @dev This data type is used to store the data of a magic scroll.
-     * reward           (uint256)    is the reward of that scroll.
-     * client           (address)    is the address of the certificate manager (any address is fine, if it has no prerequisite).
-     * taker            (address)    is the address of the certificate manager (any address is fine, if it has no prerequisite).
-     * skills           (address[])  is the address of the certificate manager (any address is fine, if it has no prerequisite).
-     * state            (uint8)      is the state of the scroll (Consumed or cancelled or fresh).
-     * deadline         (uint256)    is the state telling that this scroll can be used for unlocking learning materials off-chain.
-     * level         (uint256)    is the state telling that this scroll can be used for unlocking learning materials off-chain.
-     * state            (uint8)      is the state telling that this scroll requires a certificate from the certificate manager given.
-     * difficulty       (uint8)      is the state telling that this scroll is no longer purchasable
-     *                            (only used to check the availability to mint various magic scroll types)
+     * reward           (uint256)       is the reward of that scroll.
+     * client           (address)       is the address of the certificate manager (any address is fine, if it has no prerequisite).
+     * taker            (address)       is the address of the certificate manager (any address is fine, if it has no prerequisite).
+     * certificates     (address[])     is the address of the certificate manager (any address is fine, if it has no prerequisite).
+     * skills           (address[][])   is the address of the certificate manager (any address is fine, if it has no prerequisite).
+     * state            (uint8)         is the state of the scroll (Consumed or cancelled or fresh).
+     * deadline         (uint256)       is the state telling that this scroll can be used for unlocking learning materials off-chain.
+     * level            (uint256)       is the state telling that this scroll can be used for unlocking learning materials off-chain.
+     * state            (uint8)         is the state telling that this scroll requires a certificate from the certificate manager given.
+     * difficulty       (uint8)         is the state telling that this scroll is no longer purchasable
+     *                                  (only used to check the availability to mint various magic scroll types)
      */
     struct Job {
         uint256 reward;

@@ -422,9 +422,8 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
      * Requirements:
      *
      * - `id` must exist.
-     * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of scroll, we also reject this call.
-     * - If the scroll is not fresh, reject it.
+     * - The caller must be the owner.
+     * - The scroll state must be 1 (minted).
      */
     function consume(uint256 id, string memory data)
         external
@@ -442,9 +441,8 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
      * Requirements:
      *
      * - `id` must exist.
-     * - If the caller is not a certificate manager, then we reject the call.
-     * - If the certificate manager do not accept this type of scroll, we also reject this call.
-     * - If the scroll is not fresh, reject it.
+     * - The caller must be a certificate manager (ERC165 & Approved).
+     * - The scroll state must be 1 (minted) or 2 (consumed).
      */
     function burn(uint256 id) external virtual override returns (bool) {
         _burn(id);

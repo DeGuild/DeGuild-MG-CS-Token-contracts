@@ -426,8 +426,8 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
      * - If the certificate manager do not accept this type of scroll, we also reject this call.
      * - If the scroll is not fresh, reject it.
      */
-    function consume(uint256 id) external virtual override returns (bool) {
-        _consume(id);
+    function consume(uint256 id, string memory data) external virtual override returns (bool) {
+        _consume(id, data);
         return true;
     }
 
@@ -544,9 +544,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             hasPrerequisite: hasPrerequisite,
             available: true
         });
-        emit ScrollAdded(
-            variations.current()
-        );
+        emit ScrollAdded(variations.current());
         variations.increment();
     }
 
@@ -619,17 +617,16 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
         _balances[_scrollCreated[id].scrollID][ownerOf(id)]--;
         _scrollCreated[id].state = 0; //consumed state id
         _owners[id] = address(0);
-
-        emit StateChanged(id, _scrollCreated[id].state);
+        emit ScrollBurned(id, _msgSender());
     }
 
     function _forceCancel(uint256 id) private onlyOwner {
         require(_exists(id), "Nonexistent token");
         _scrollCreated[id].state = 99; //Cancelled state id
-        emit StateChanged(id, _scrollCreated[id].state);
+        _owners[id] = address(0);
     }
 
-    function _consume(uint256 id) internal virtual {
+    function _consume(uint256 id, string memory data) internal virtual {
         uint256 scrollType = _scrollCreated[id].scrollID;
 
         require(_exists(id), "Nonexistent token");
@@ -653,6 +650,6 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
             "This scroll is no longer consumable."
         );
         _scrollCreated[id].state = 2; //consumed state id
-        emit StateChanged(id, _scrollCreated[id].state);
+        emit ScrollConsumed(id, keccak256(abi.encodePacked(data)));
     }
 }

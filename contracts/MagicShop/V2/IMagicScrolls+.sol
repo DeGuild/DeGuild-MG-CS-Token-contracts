@@ -29,15 +29,13 @@ interface IMagicScrollsPlus {
         bool available;
     }
 
-    /**
-     * @dev Emitted when `scrollId` make changes to its state, changing to `scrollState`.
-     */
-    event StateChanged(uint256 scrollId, uint8 scrollState);
+    event ScrollConsumed(uint256 scrollId, bytes32 indexed passcode);
+    event ScrollBurned(uint256 scrollId, address indexed certificateManager);
 
     /**
      * @dev Emitted when `scrollId` is minted based from scroll of type `scrollType`.
      */
-    event ScrollBought(uint256 scrollId, uint256 indexed scrollType, address buyer);
+    event ScrollBought(uint256 scrollId, uint256 indexed scrollType, address indexed buyer);
 
     /**
      * @dev Emitted when a new scroll is added, giving that scroll of type `scrollId` is ready to be minted.
@@ -234,7 +232,7 @@ interface IMagicScrollsPlus {
      * - If the certificate manager do not accept this type of scroll, we also reject this call.
      * - If the scroll is not fresh, reject it.
      */
-    function consume(uint256 id) external returns (bool);
+    function consume(uint256 id, string memory data) external returns (bool);
 
     /**
      * @dev Change `id` token state to 0 (Burned) and transfer ownership to address(0).

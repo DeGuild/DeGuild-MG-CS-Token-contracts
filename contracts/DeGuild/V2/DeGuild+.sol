@@ -354,6 +354,8 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             _DGT.transfer(winner, _JobsCreated[id].reward),
             "Not enough fund"
         );
+        _JobsCreated[id].state = 3;
+        _currentJob[_JobsCreated[id].taker] = 0;
         emit JobCaseClosed(id, loser);
 
         return true;

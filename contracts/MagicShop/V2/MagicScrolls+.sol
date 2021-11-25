@@ -647,7 +647,7 @@ contract MagicScrollsPlus is Context, Ownable, IMagicScrollsPlus {
     function _consume(uint256 id, string memory data) internal virtual {
         require(_exists(id), "IMagicScrollsPlus: owner query for nonexistent token");
         require(
-            _owners[tracker.current()] == _msgSender(),
+            _owners[id] == _msgSender(),
             "IMagicScrollsPlus: must be consumed by the owner"
         );
         require(

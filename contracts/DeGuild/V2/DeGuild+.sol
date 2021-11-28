@@ -315,8 +315,8 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     {
         require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
         require(
-            _JobsCreated[id].state != 99 && _JobsCreated[id].state != 3,
-            "IDeGuildPlus: job is already cancelled or completed"
+            _JobsCreated[id].state == 0,
+            "IDeGuildPlus: this job is not availble to be judged"
         );
         require(
             _DGT.transfer(_owners[id], _JobsCreated[id].reward),

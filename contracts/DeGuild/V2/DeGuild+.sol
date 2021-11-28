@@ -432,7 +432,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "IDeGuildPlus: only client can complete this job"
         );
 
-        uint256 fee = _JobsCreated[id].reward * 125 / 10000;
+        uint256 fee = (_JobsCreated[id].reward * 125) / 10000;
         require(
             _DGT.transfer(owner(), fee),
             "IDeGuildPlus: not enough fund to transfer reward"
@@ -492,90 +492,9 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
      * - the caller must be the owner of this contract
      * - This contract must have enough fund to transfer fees.
      * - This contract must have enough fund to transfer rewards.     */
-    function absoluteJudge(
+    function judge(
         uint256 id,
         bool decision,
-        uint256 feeRate,
-        uint256 clientRate,
-        uint256 takerRate
-    ) public virtual override onlyOwner returns (bool) {
-        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
-        require(feeRate < 10000, "IDeGuildPlus: fee rate too large");
-        require(clientRate < 10000, "IDeGuildPlus: client rate too large");
-        require(takerRate < 10000, "IDeGuildPlus: taker rate too large");
-        require(
-            feeRate + clientRate + takerRate == 10000,
-            "IDeGuildPlus: sum of rates is not 100%"
-        );
-        require(
-            _JobsCreated[id].state == 0,
-            "IDeGuildPlus: this job is not availble to be judged"
-        );
-
-        address loser;
-        uint256 fee;
-        uint256 clientReturn;
-        uint256 takerReturn;
-
-        unchecked {
-            fee = (_JobsCreated[id].reward * feeRate) / 10000;
-        }
-
-        require(
-            _DGT.transfer(owner(), fee),
-            "IDeGuildPlus: not enough fund to transfer fee to DeGuild HQ"
-        );
-        unchecked {
-            _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
-        }
-
-        if (decision) {
-            loser = _JobsCreated[id].taker;
-            unchecked {
-                clientReturn = (_JobsCreated[id].reward * clientRate) / 10000;
-            }
-
-            require(
-                _DGT.transfer(_JobsCreated[id].client, clientReturn),
-                "IDeGuildPlus: not enough fund to transfer fee to client"
-            );
-
-            _JobsCreated[id].state = 1;
-            _JobsCreated[id].taker = address(0);
-            _JobsCreated[id].assigned = false;
-        } else {
-            loser = _JobsCreated[id].client;
-            unchecked {
-                takerReturn = (_JobsCreated[id].reward * takerRate) / 10000;
-            }
-            require(
-                _DGT.transfer(_JobsCreated[id].taker, takerReturn),
-                "IDeGuildPlus: not enough fund to transfer fee to taker"
-            );
-
-            _JobsCreated[id].state = 3;
-            _currentJob[_JobsCreated[id].taker] = 0;
-            emit JobCompleted(id, _JobsCreated[id].taker);
-        }
-
-        _banned[loser] = true;
-        emit JobCaseClosed(id, loser);
-
-        return true;
-    }
-
-    /**
-     * @dev See {IDeGuildPlus-dilemmaJudge}.
-     *
-     * Requirements:
-     *
-     * - `id` must exist.
-     * - `id` state must be 0 (investigating).
-     * - the caller must be the owner of this contract
-     * - This contract must have enough fund to transfer fees.
-     * - This contract must have enough fund to transfer rewards.     */
-    function dilemmaJudge(
-        uint256 id,
         bool isCompleted,
         uint256 feeRate,
         uint256 clientRate,
@@ -587,7 +506,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         require(takerRate < 10000, "IDeGuildPlus: taker rate too large");
         require(
             feeRate + clientRate + takerRate == 10000,
-            "IDeGuildPlus: sum of rates over 100%"
+            "IDeGuildPlus: sum of rates is not 100%"
         );
         require(
             _JobsCreated[id].state == 0,
@@ -614,20 +533,30 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             _DGT.transfer(_JobsCreated[id].taker, takerReturn),
             "IDeGuildPlus: not enough fund to transfer fee to taker"
         );
-
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
         }
+        _currentJob[_JobsCreated[id].taker] = 0;
         if (isCompleted) {
             _JobsCreated[id].state = 3;
             emit JobCompleted(id, _JobsCreated[id].taker);
+            if (decision) {
+                _banned[_JobsCreated[id].client] = true;
+                emit JobCaseClosed(id, _JobsCreated[id].client);
+            } else {
+                emit JobCaseClosed(id, address(0));
+            }
         } else {
             _JobsCreated[id].state = 1;
             _JobsCreated[id].taker = address(0);
             _JobsCreated[id].assigned = false;
+            if (decision) {
+                _banned[_JobsCreated[id].taker] = true;
+                emit JobCaseClosed(id, _JobsCreated[id].taker);
+            } else {
+                emit JobCaseClosed(id, address(0));
+            }
         }
-        _currentJob[_JobsCreated[id].taker] = 0;
-        emit JobCaseClosed(id, address(0));
 
         return true;
     }

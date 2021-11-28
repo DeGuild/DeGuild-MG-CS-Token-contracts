@@ -268,32 +268,6 @@ interface IDeGuildPlus {
     function report(uint256 id) external returns (bool);
 
     /**
-     * @dev Change `id` token state to 3 (Completed), free the job taker and ban the criminal.
-     *
-     * Usage : Complete the job and judge the ongoing case
-     * setting `decision` to true will ban the taker
-     * else, we ban the client
-     * Emits a {JobCaseClosed} event.
-     *
-     * Notes : Banned clients can still download the job submission.
-     *
-     * Requirements:
-     *
-     * - `id` must exist.
-     * - `id` state must be 0 (investigating).
-     * - the caller must be the owner of this contract
-     * - This contract must have enough fund to transfer fees.
-     * - This contract must have enough fund to transfer rewards.
-     */
-    function absoluteJudge(
-        uint256 id,
-        bool decision,
-        uint256 feeRate,
-        uint256 clientRate,
-        uint256 takerRate
-    ) external returns (bool);
-
-    /**
      * @dev Change `id` token state to 3 (Completed), free the job taker.
      *
      * Usage : Complete the job and judge the ongoing case
@@ -311,8 +285,9 @@ interface IDeGuildPlus {
      * - This contract must have enough fund to transfer fees.
      * - This contract must have enough fund to transfer rewards.
      */
-    function dilemmaJudge(
+    function judge(
         uint256 id,
+        bool decision,
         bool isCompleted,
         uint256 feeRate,
         uint256 clientRate,

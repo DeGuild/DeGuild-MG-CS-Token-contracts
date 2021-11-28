@@ -432,7 +432,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             "IDeGuildPlus: only client can complete this job"
         );
 
-        uint256 fee = _JobsCreated[id].reward / 50;
+        uint256 fee = _JobsCreated[id].reward * 125 / 10000;
         require(
             _DGT.transfer(owner(), fee),
             "IDeGuildPlus: not enough fund to transfer reward"
@@ -505,7 +505,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         require(takerRate < 10000, "IDeGuildPlus: taker rate too large");
         require(
             feeRate + clientRate + takerRate == 10000,
-            "IDeGuildPlus: sum of rates over 100%"
+            "IDeGuildPlus: sum of rates is not 100%"
         );
         require(
             _JobsCreated[id].state == 0,

@@ -234,7 +234,7 @@ interface IDeGuildPlus {
     function take(uint256 id) external returns (bool);
 
     /**
-     * @dev Change `id` token state to 3 (Completed) 
+     * @dev Change `id` token state to 3 (Completed)
      * and transfer rewards to the taker with 2% fee deducted.
      *
      * Usage : Complete the job and give the reward the taker
@@ -253,7 +253,7 @@ interface IDeGuildPlus {
     /**
      * @dev Change `id` token state to 0 (Investigating).
      *
-     * Usage : Set a flag for the owner of this contract 
+     * Usage : Set a flag for the owner of this contract
      * to take care of malicious events
      * Emits a {JobCaseOpened} event.
      *
@@ -280,12 +280,44 @@ interface IDeGuildPlus {
      * Requirements:
      *
      * - `id` must exist.
-     * - `id` state must be 0 (investigating).     
+     * - `id` state must be 0 (investigating).
      * - the caller must be the owner of this contract
      * - This contract must have enough fund to transfer fees.
      * - This contract must have enough fund to transfer rewards.
      */
-    function judge(uint256 id, bool decision) external returns (bool);
+    function absoluteJudge(
+        uint256 id,
+        bool decision,
+        uint256 feeRate,
+        uint256 clientRate,
+        uint256 takerRate
+    ) external returns (bool);
+
+    /**
+     * @dev Change `id` token state to 3 (Completed), free the job taker.
+     *
+     * Usage : Complete the job and judge the ongoing case
+     * setting `decision` to true will ban the taker
+     * else, we ban the client
+     * Emits a {JobCaseClosed} event.
+     *
+     * Notes : Banned clients can still download the job submission.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - `id` state must be 0 (investigating).
+     * - the caller must be the owner of this contract
+     * - This contract must have enough fund to transfer fees.
+     * - This contract must have enough fund to transfer rewards.
+     */
+    function dilemmaJudge(
+        uint256 id,
+        bool isCompleted,
+        uint256 feeRate,
+        uint256 clientRate,
+        uint256 takerRate
+    ) external returns (bool);
 
     /**
      * @dev Add a job to the job list.

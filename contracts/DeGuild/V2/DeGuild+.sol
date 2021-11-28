@@ -106,10 +106,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         override
         returns (string memory)
     {
-        require(
-            _exists(jobId),
-            "IDeGuildPlus: URI query for nonexistent job"
-        );
+        require(_exists(jobId), "IDeGuildPlus: URI query for nonexistent job");
 
         string memory baseURI = _baseURI();
 
@@ -152,7 +149,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         override
         returns (address, address)
     {
-        require(_exists(jobId), "IDeGuildPlus: owner query for nonexistent job");
+        require(
+            _exists(jobId),
+            "IDeGuildPlus: owner query for nonexistent job"
+        );
         return (_JobsCreated[jobId].client, _JobsCreated[jobId].taker);
     }
 
@@ -183,7 +183,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         override
         returns (bool)
     {
-        require(_exists(jobId), "IDeGuildPlus: owner query for nonexistent job");
+        require(
+            _exists(jobId),
+            "IDeGuildPlus: owner query for nonexistent job"
+        );
 
         address[] memory certificates = _JobsCreated[jobId].certificates;
         uint256[][] memory skills = _JobsCreated[jobId].skills;
@@ -227,7 +230,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             uint8
         )
     {
-        require(_exists(jobId), "IDeGuildPlus: owner query for nonexistent job");
+        require(
+            _exists(jobId),
+            "IDeGuildPlus: owner query for nonexistent job"
+        );
 
         Job memory info = _JobsCreated[jobId];
         return (
@@ -274,7 +280,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             ) {
                 return false;
             }
-            require(skills[i].length < 20, "IDeGuildPlus: more than 20 skills required for one certificate address");
+            require(
+                skills[i].length < 20,
+                "IDeGuildPlus: more than 20 skills required for one certificate address"
+            );
             for (uint256 j = 0; j < skills[i].length; j++) {
                 if (
                     skills[i][j] >=
@@ -324,7 +333,7 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     /**
      * @dev See {IDeGuildPlus-cancel}.
      *
-    * Requirements:
+     * Requirements:
      *
      * - `id` must exist.
      * - The caller must be the client.
@@ -337,7 +346,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             _JobsCreated[id].client == _msgSender(),
             "IDeGuildPlus: only client can cancel this job"
         );
-        require(_JobsCreated[id].state == 1, "IDeGuildPlus: this job is already taken");
+        require(
+            _JobsCreated[id].state == 1,
+            "IDeGuildPlus: this job is already taken"
+        );
         require(
             _DGT.transfer(_owners[id], _JobsCreated[id].reward),
             "IDeGuildPlus: not enough fund"
@@ -370,8 +382,14 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
             _msgSender() != _JobsCreated[id].client,
             "IDeGuildPlus: caller cannot be client"
         );
-        require(isQualified(id, _msgSender()), "IDeGuildPlus: caller is not qualified");
-        require(_currentJob[_msgSender()] == 0, "IDeGuildPlus: caller is already occupied");
+        require(
+            isQualified(id, _msgSender()),
+            "IDeGuildPlus: caller is not qualified"
+        );
+        require(
+            _currentJob[_msgSender()] == 0,
+            "IDeGuildPlus: caller is already occupied"
+        );
         require(
             _JobsCreated[id].state == 1,
             "IDeGuildPlus: this job is not availble to be taken"
@@ -415,7 +433,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         );
 
         uint256 fee = _JobsCreated[id].reward / 50;
-        require(_DGT.transfer(owner(), fee), "IDeGuildPlus: not enough fund to transfer reward");
+        require(
+            _DGT.transfer(owner(), fee),
+            "IDeGuildPlus: not enough fund to transfer reward"
+        );
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
@@ -462,52 +483,151 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
     }
 
     /**
-     * @dev See {IDeGuildPlus-judge}.
+     * @dev See {IDeGuildPlus-absoluteJudge}.
      *
      * Requirements:
      *
      * - `id` must exist.
-     * - `id` state must be 0 (investigating).     
+     * - `id` state must be 0 (investigating).
      * - the caller must be the owner of this contract
      * - This contract must have enough fund to transfer fees.
      * - This contract must have enough fund to transfer rewards.     */
-    function judge(uint256 id, bool decision)
-        public
-        virtual
-        override
-        onlyOwner
-        returns (bool)
-    {
+    function absoluteJudge(
+        uint256 id,
+        bool decision,
+        uint256 feeRate,
+        uint256 clientRate,
+        uint256 takerRate
+    ) public virtual override onlyOwner returns (bool) {
         require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
+        require(feeRate < 10000, "IDeGuildPlus: fee rate too large");
+        require(clientRate < 10000, "IDeGuildPlus: client rate too large");
+        require(takerRate < 10000, "IDeGuildPlus: taker rate too large");
+        require(
+            feeRate + clientRate + takerRate == 10000,
+            "IDeGuildPlus: sum of rates over 100%"
+        );
         require(
             _JobsCreated[id].state == 0,
             "IDeGuildPlus: this job is not availble to be judged"
         );
 
-        address winner;
         address loser;
-        if (decision) {
-            winner = _JobsCreated[id].client;
-            loser = _JobsCreated[id].taker;
-        } else {
-            winner = _JobsCreated[id].taker;
-            loser = _JobsCreated[id].client;
+        uint256 fee;
+        uint256 clientReturn;
+        uint256 takerReturn;
+
+        unchecked {
+            fee = (_JobsCreated[id].reward * feeRate) / 10000;
         }
 
-        uint256 fee = _JobsCreated[id].reward / 10;
-        require(_DGT.transfer(owner(), fee), "IDeGuildPlus: not enough fund to transfer fee");
+        require(
+            _DGT.transfer(owner(), fee),
+            "IDeGuildPlus: not enough fund to transfer fee to DeGuild HQ"
+        );
+        unchecked {
+            _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
+        }
+
+        if (decision) {
+            loser = _JobsCreated[id].taker;
+            unchecked {
+                clientReturn = (_JobsCreated[id].reward * clientRate) / 10000;
+            }
+
+            require(
+                _DGT.transfer(_JobsCreated[id].client, clientReturn),
+                "IDeGuildPlus: not enough fund to transfer fee to client"
+            );
+
+            _JobsCreated[id].state = 1;
+            _JobsCreated[id].taker = address(0);
+            _JobsCreated[id].assigned = false;
+        } else {
+            loser = _JobsCreated[id].client;
+            unchecked {
+                takerReturn = (_JobsCreated[id].reward * takerRate) / 10000;
+            }
+            require(
+                _DGT.transfer(_JobsCreated[id].taker, takerReturn),
+                "IDeGuildPlus: not enough fund to transfer fee to taker"
+            );
+
+            _JobsCreated[id].state = 3;
+            _currentJob[_JobsCreated[id].taker] = 0;
+            emit JobCompleted(id, _JobsCreated[id].taker);
+        }
+
+        _banned[loser] = true;
+        emit JobCaseClosed(id, loser);
+
+        return true;
+    }
+
+    /**
+     * @dev See {IDeGuildPlus-dilemmaJudge}.
+     *
+     * Requirements:
+     *
+     * - `id` must exist.
+     * - `id` state must be 0 (investigating).
+     * - the caller must be the owner of this contract
+     * - This contract must have enough fund to transfer fees.
+     * - This contract must have enough fund to transfer rewards.     */
+    function dilemmaJudge(
+        uint256 id,
+        bool isCompleted,
+        uint256 feeRate,
+        uint256 clientRate,
+        uint256 takerRate
+    ) public virtual override onlyOwner returns (bool) {
+        require(_exists(id), "IDeGuildPlus: owner query for nonexistent token");
+        require(feeRate < 10000, "IDeGuildPlus: fee rate too large");
+        require(clientRate < 10000, "IDeGuildPlus: client rate too large");
+        require(takerRate < 10000, "IDeGuildPlus: taker rate too large");
+        require(
+            feeRate + clientRate + takerRate == 10000,
+            "IDeGuildPlus: sum of rates over 100%"
+        );
+        require(
+            _JobsCreated[id].state == 0,
+            "IDeGuildPlus: this job is not availble to be judged"
+        );
+
+        uint256 fee;
+        uint256 clientReturn;
+        uint256 takerReturn;
+        unchecked {
+            fee = (_JobsCreated[id].reward * feeRate) / 10000;
+            clientReturn = (_JobsCreated[id].reward * clientRate) / 10000;
+            takerReturn = (_JobsCreated[id].reward * takerRate) / 10000;
+        }
+        require(
+            _DGT.transfer(owner(), fee),
+            "IDeGuildPlus: not enough fund to transfer fee"
+        );
+        require(
+            _DGT.transfer(_JobsCreated[id].client, clientReturn),
+            "IDeGuildPlus: not enough fund to transfer fee to client"
+        );
+        require(
+            _DGT.transfer(_JobsCreated[id].taker, takerReturn),
+            "IDeGuildPlus: not enough fund to transfer fee to taker"
+        );
 
         unchecked {
             _JobsCreated[id].reward = _JobsCreated[id].reward - fee;
         }
-        require(
-            _DGT.transfer(winner, _JobsCreated[id].reward),
-            "IDeGuildPlus: not enough fund to transfer reward"
-        );
-        _banned[loser] = true;
-        _JobsCreated[id].state = 3;
+        if (isCompleted) {
+            _JobsCreated[id].state = 3;
+            emit JobCompleted(id, _JobsCreated[id].taker);
+        } else {
+            _JobsCreated[id].state = 1;
+            _JobsCreated[id].taker = address(0);
+            _JobsCreated[id].assigned = false;
+        }
         _currentJob[_JobsCreated[id].taker] = 0;
-        emit JobCaseClosed(id, loser);
+        emit JobCaseClosed(id, address(0));
 
         return true;
     }
@@ -530,7 +650,10 @@ contract DeGuildPlus is Context, Ownable, IDeGuildPlus {
         uint8 difficulty
     ) public virtual override returns (bool) {
         require(!_banned[_msgSender()], "IDeGuildPlus: caller has been banned");
-        require(_msgSender() != taker, "IDeGuildPlus: caller cannot assign this taker address to this job");
+        require(
+            _msgSender() != taker,
+            "IDeGuildPlus: caller cannot assign this taker address to this job"
+        );
 
         require(
             verifySkills(certificates, skills),

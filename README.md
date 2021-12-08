@@ -44,6 +44,7 @@ To verify
         yarn hardhat verify --contract contracts/MagicShop/MagicShop.sol:MagicShop --network rinkeby 0xFAb4628f67B89bccbcd913E1c946F91f4ABF4034
 
 We have shortcuts for contract deployments and verifications
+
         yarn deployD - Deploy DeGuildPlus Contract
         yarn deployM - Deploy MagicShopPlus Contract
         yarn deployC - Deploy CertificateManager Contract

@@ -102,6 +102,9 @@ interface IDeGuildPlus {
      * Requirements:
      *
      * - `jobId` cannot be non-existence token.
+     *
+     * Error messages
+     * A0 - "IDeGuildPlus: URI query for nonexistent job"
      */
     function jobURI(uint256 jobId) external view returns (string memory);
 
@@ -121,6 +124,9 @@ interface IDeGuildPlus {
      * Requirements:
      *
      * - `id` must exist.
+     *
+     * Error messages
+     * A0 - "IDeGuildPlus: URI query for nonexistent job"
      */
     function ownersOf(uint256 id) external view returns (address, address);
 
@@ -136,6 +142,9 @@ interface IDeGuildPlus {
      * Requirements:
      *
      * - `jobId` must exist.
+     *
+     * Error messages
+     * A0 - "IDeGuildPlus: URI query for nonexistent job"
      */
     function isQualified(uint256 jobId, address taker)
         external
@@ -155,6 +164,9 @@ interface IDeGuildPlus {
      * Requirements:
      *
      * - `jobId` must exist.
+     *
+     * Error messages
+     * A0 - "IDeGuildPlus: URI query for nonexistent job"
      */
     function jobInfo(uint256 jobId)
         external
@@ -180,6 +192,11 @@ interface IDeGuildPlus {
      * - `skills` element cannot have more than 20 sub-elements (skills[0].length < 20).
      * - `skills` length must be equal to `certificates`.
      * - `certificates` array length must be less than 30.
+     *
+     * Error messages
+     * C1 - "IDeGuildPlus: requirement certificate addresses larger than 30 address"
+     * S1 - "IDeGuildPlus: sizes of skill array and certificate array are not equal"
+     * SK - "IDeGuildPlus: more than 20 skills required for one certificate address"
      */
     function verifySkills(
         address[] memory certificates,
@@ -197,6 +214,11 @@ interface IDeGuildPlus {
      * - The caller must be the owner of deGuild.
      * - `id` state must not be 99 or 3 (neither cancelled or completed).
      * - This contract has enough money to return all the reward of `id`.
+     *
+     * Error messages
+     * A0 - "IDeGuildPlus: owner query for nonexistent token"
+     * J0 - "IDeGuildPlus: this job is not availble to be judged"
+     * NTR - "IDeGuildPlus: not enough fund to return reward"
      */
     function forceCancel(uint256 id) external returns (bool);
 
@@ -234,11 +256,11 @@ interface IDeGuildPlus {
     function take(uint256 id) external returns (bool);
 
     /**
-     * @dev Change `id` token state to 3 (Completed) 
+     * @dev Change `id` token state to 3 (Completed)
      * and transfer rewards to the taker with 2% fee deducted.
      *
      * Usage : Complete the job and give the reward the taker
-     * Emits a {StateChanged} event.
+     * Emits a {JobCompleted} event.
      *
      * Requirements:
      *
@@ -253,7 +275,7 @@ interface IDeGuildPlus {
     /**
      * @dev Change `id` token state to 0 (Investigating).
      *
-     * Usage : Set a flag for the owner of this contract 
+     * Usage : Set a flag for the owner of this contract
      * to take care of malicious events
      * Emits a {JobCaseOpened} event.
      *
@@ -268,24 +290,33 @@ interface IDeGuildPlus {
     function report(uint256 id) external returns (bool);
 
     /**
-     * @dev Change `id` token state to 3 (Completed), free the job taker and ban the criminal.
+     * @dev Change `id` token state to 3 (Completed), free the job taker.
      *
      * Usage : Complete the job and judge the ongoing case
      * setting `decision` to true will ban the taker
      * else, we ban the client
      * Emits a {JobCaseClosed} event.
+     * Emits a {JobCompleted} event if `isCompleted` is true.
      *
      * Notes : Banned clients can still download the job submission.
      *
      * Requirements:
      *
      * - `id` must exist.
-     * - `id` state must be 0 (investigating).     
+     * - `id` state must be 0 (investigating).
      * - the caller must be the owner of this contract
+     * - the rates must be valid.
      * - This contract must have enough fund to transfer fees.
      * - This contract must have enough fund to transfer rewards.
      */
-    function judge(uint256 id, bool decision) external returns (bool);
+    function judge(
+        uint256 id,
+        bool decision,
+        bool isCompleted,
+        uint256 feeRate,
+        uint256 clientRate,
+        uint256 takerRate
+    ) external returns (bool);
 
     /**
      * @dev Add a job to the job list.

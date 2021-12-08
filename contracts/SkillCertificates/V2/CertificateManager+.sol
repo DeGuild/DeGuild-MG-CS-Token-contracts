@@ -11,7 +11,7 @@ contract CertificateManagerPlus is SkillCertificatePlus, ERC165Storage {
             "Genius Manager",
             "GM",
             "https://us-central1-deguild-2021.cloudfunctions.net/app/readCertificate/",
-            address(0xC1BbF9Bd648BC0c85aF179FB0C20722f678ac31e)
+            address(0x3dd02a0c752C8e44Babb7efe4abEB322F4b459bD)
         )
     {
         _registerInterface(type(ISkillCertificatePlus).interfaceId);
